@@ -44,8 +44,12 @@ const Navigation = () => {
     <nav className="navigation">
       <div className="nav-container">
         <Link to="/" className="nav-logo">
-          <span className="logo-icon">🌐</span>
-          <span className="logo-text">DALI Net</span>
+          <img
+            src="/dali-logo.png"
+            alt="DALI logo"
+            className="logo-image"
+          />
+          <span className="logo-text">Net</span>
         </Link>
 
         <div className="nav-links">

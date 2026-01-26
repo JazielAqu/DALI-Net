@@ -15,11 +15,19 @@ const HomePage = () => {
   const [failedAvatars, setFailedAvatars] = useState({});
 
   const { data: membersData, isLoading, error } = useQuery({
-    queryKey: ['members', searchTerm],
-    queryFn: () => membersAPI.getAll({ search: searchTerm, limit: 50 }),
+    queryKey: ['members'],
+    queryFn: () => membersAPI.getAll({ limit: 500 }),
+    staleTime: 5 * 60 * 1000,
   });
 
-  const members = membersData?.data?.data || [];
+  const allMembers = membersData?.data?.data || [];
+  const searchLower = searchTerm.trim().toLowerCase();
+  const members = searchLower
+    ? allMembers.filter((m) =>
+        m.name?.toLowerCase().includes(searchLower) ||
+        m.bio?.toLowerCase().includes(searchLower)
+      )
+    : allMembers;
 
   // Debug logging
   if (error) {

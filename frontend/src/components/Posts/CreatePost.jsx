@@ -9,13 +9,19 @@ const CreatePost = () => {
   const queryClient = useQueryClient();
   const [content, setContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [imageData, setImageData] = useState('');
+  const [imageFileName, setImageFileName] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const [fileError, setFileError] = useState('');
 
   const mutation = useMutation({
     mutationFn: (data) => postsAPI.create(data),
     onSuccess: () => {
       setContent('');
       setImageUrl('');
+      setImageData('');
+      setImageFileName('');
+      setFileError('');
       setIsOpen(false);
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
@@ -26,11 +32,39 @@ const CreatePost = () => {
     e.preventDefault();
     if (!content.trim()) return;
 
+    const imagePayload = (imageData || imageUrl).trim();
+
     mutation.mutate({
       authorId: currentUser.id,
       content: content.trim(),
-      imageUrl: imageUrl.trim(),
+      imageUrl: imagePayload,
     });
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setImageFileName('');
+      setImageUrl('');
+      setImageData('');
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      setFileError('Please select an image file');
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      setFileError('Image must be under 3MB');
+      return;
+    }
+    setFileError('');
+    setImageFileName(file.name);
+    setImageUrl(''); // Keep the URL field clean when a file is chosen
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageData(reader.result?.toString() || '');
+    };
+    reader.readAsDataURL(file);
   };
 
   if (!isOpen) {
@@ -69,6 +103,18 @@ const CreatePost = () => {
           required
         />
 
+        <label className="file-input-label">
+          <span>Select image (optional)</span>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="file-input"
+          />
+        </label>
+        {imageFileName && (
+          <div className="selected-file">Selected: {imageFileName}</div>
+        )}
         <input
           type="url"
           className="input"
@@ -77,6 +123,11 @@ const CreatePost = () => {
           onChange={(e) => setImageUrl(e.target.value)}
           style={{ marginBottom: '1rem' }}
         />
+        {fileError && <div className="error-message">{fileError}</div>}
+
+        {imageData && (
+          <div className="selected-file">Image selected and ready to upload.</div>
+        )}
 
         <div className="create-post-actions">
           <button

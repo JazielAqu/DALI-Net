@@ -3,6 +3,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import db from '../services/firebase.js';
 import { createMember } from '../models/Member.js';
+
+const slugify = (str) => str
+  .toString()
+  .trim()
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/(^-|-$)+/g, '');
 import { createPost } from '../models/Post.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -50,9 +57,10 @@ const seedMembers = async () => {
   let batchCount = 0;
 
   for (const memberData of members) {
-    const memberRef = db.collection('members').doc();
+    const idFromName = slugify(memberData.name || '');
+    const memberRef = db.collection('members').doc(idFromName || undefined);
     const member = createMember(memberData);
-    batch.set(memberRef, member);
+    batch.set(memberRef, member, { merge: true });
     count++;
     batchCount++;
 

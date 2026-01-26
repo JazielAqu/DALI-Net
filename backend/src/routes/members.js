@@ -26,11 +26,17 @@ router.get('/', async (req, res, next) => {
       snapshot = await db.collection('members').limit(500).get();
     }
     
-    // Collect all members (no dedup to preserve full list)
-    let members = [];
+    // Collect and deduplicate by normalized name to avoid duplicates from seeding
+    const membersByName = new Map();
     snapshot.forEach(doc => {
-      members.push({ id: doc.id, ...doc.data() });
+      const data = { id: doc.id, ...doc.data() };
+      const key = (data.name || '').trim().toLowerCase();
+      if (!key) return;
+      if (!membersByName.has(key)) {
+        membersByName.set(key, data);
+      }
     });
+    let members = Array.from(membersByName.values());
 
     // Apply search filter (client-side for simplicity, can be optimized with Algolia)
     if (search) {
