@@ -278,7 +278,7 @@ for (let i = 0; i < followingIds.length; i += batchSize) {
 }
 ```
 
-## 🤖 AI Usage
+## AI Usage
 
 I used ChatGPT during development to assist with:
 
