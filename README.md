@@ -2,6 +2,11 @@
 
 A full-stack social media application built for the DALI Lab, allowing members to connect, share posts, follow each other, and interact through likes, comments, and notifications.
 
+## Live Demo
+
+- Frontend: https://dali-net-7huj.onrender.com
+- Backend API: https://dali-net-backend.onrender.com/api
+
 ## Features
 
 - **User Profiles**: View member profiles with bio, interests, role, and year
