@@ -10,17 +10,23 @@ router.get('/:userId', async (req, res, next) => {
     const { userId } = req.params;
     const { limit = 50, unreadOnly = false } = req.query;
 
-    let query = db.collection('notifications')
-      .where('userId', '==', userId);
+    let query = db.collection('notifications').where('userId', '==', userId);
 
     if (unreadOnly === 'true') {
       query = query.where('read', '==', false);
     }
 
-    const snapshot = await query
-      .orderBy('createdAt', 'desc')
-      .limit(parseInt(limit))
-      .get();
+    let snapshot;
+    try {
+      snapshot = await query
+        .orderBy('createdAt', 'desc')
+        .limit(parseInt(limit))
+        .get();
+    } catch (err) {
+      console.error('Error fetching notifications (ordered):', err);
+      // Fallback: return unsorted results instead of 500
+      snapshot = await query.limit(parseInt(limit)).get();
+    }
 
     const notifications = [];
     snapshot.forEach(doc => {
@@ -31,7 +37,11 @@ router.get('/:userId', async (req, res, next) => {
     const unreadSnapshot = await db.collection('notifications')
       .where('userId', '==', userId)
       .where('read', '==', false)
-      .get();
+      .get()
+      .catch(err => {
+        console.error('Error fetching unread notifications:', err);
+        return { size: 0 };
+      });
 
     res.json({
       success: true,

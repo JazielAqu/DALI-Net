@@ -13,7 +13,22 @@ const loadData = () => {
   try {
     const dataPath = path.join(__dirname, '../../../data/dali_social_media.json');
     const rawData = fs.readFileSync(dataPath, 'utf8');
-    return JSON.parse(rawData);
+    const parsed = JSON.parse(rawData);
+
+    // Deduplicate by name (case-insensitive, trimmed)
+    const seen = new Set();
+    const deduped = [];
+    for (const entry of parsed) {
+      const key = (entry.name || '').trim().toLowerCase();
+      if (!key) continue;
+      if (seen.has(key)) {
+        console.warn(`Skipping duplicate entry for ${entry.name}`);
+        continue;
+      }
+      seen.add(key);
+      deduped.push(entry);
+    }
+    return deduped;
   } catch (error) {
     console.error('Error loading data file:', error);
     return [];

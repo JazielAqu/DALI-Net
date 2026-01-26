@@ -1,37 +1,72 @@
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { membersAPI } from '../../services/api';
 import FollowButton from '../FollowButton/FollowButton';
 import PostCard from '../Posts/PostCard';
+import { getSafeImageUrl } from '../../utils/imageUtils';
 import './Profile.css';
 
 const Profile = ({ memberId }) => {
   const { currentUser } = useAuth();
 
-  const { data: memberData, isLoading } = useQuery({
+  const defaultAvatar = '/default-avatar.jpg';
+  const [failedSrcs, setFailedSrcs] = useState({});
+
+  const { data: memberData, isLoading, isError: memberError, error: memberErrObj } = useQuery({
     queryKey: ['member', memberId],
     queryFn: () => membersAPI.getById(memberId),
+    enabled: !!memberId,
+    retry: false,
   });
 
-  const { data: postsData } = useQuery({
+  const { data: postsData, isError: postsError, error: postsErrObj } = useQuery({
     queryKey: ['member-posts', memberId],
     queryFn: () => membersAPI.getPosts(memberId),
+    enabled: !!memberId,
+    retry: false,
   });
 
-  const { data: followersData } = useQuery({
+  const { data: followersData, isError: followersError, error: followersErrObj } = useQuery({
     queryKey: ['member-followers', memberId],
     queryFn: () => membersAPI.getFollowers(memberId),
+    enabled: !!memberId,
+    retry: false,
   });
 
-  const { data: followingData } = useQuery({
+  const { data: followingData, isError: followingError, error: followingErrObj } = useQuery({
     queryKey: ['member-following', memberId],
     queryFn: () => membersAPI.getFollowing(memberId),
+    enabled: !!memberId,
+    retry: false,
   });
+
+  const avatarSrc = memberData?.data?.data
+    ? getSafeImageUrl(
+        [
+          memberData.data.data.profileImage,
+          memberData.data.data.picture,
+          memberData.data.data.image,
+        ],
+        failedSrcs,
+        defaultAvatar
+      )
+    : defaultAvatar;
 
   if (isLoading) {
     return (
       <div className="profile-container">
         <div className="spinner"></div>
+      </div>
+    );
+  }
+
+  if (memberError) {
+    return (
+      <div className="profile-container">
+        <div className="error-message">
+          {memberErrObj?.message ? `Error loading member: ${memberErrObj.message}` : 'Error loading member'}
+        </div>
       </div>
     );
   }
@@ -51,14 +86,21 @@ const Profile = ({ memberId }) => {
 
   const isOwnProfile = currentUser && currentUser.id === memberId;
 
+  const handleAvatarError = (e) => {
+    e.target.onerror = null;
+    setFailedSrcs((prev) => ({ ...prev, [avatarSrc]: true }));
+    e.target.src = defaultAvatar;
+  };
+
   return (
     <div className="profile-container">
       <div className="profile-header card">
         <div className="profile-avatar-section">
           <img
-            src={member.profileImage || member.image || '/default-avatar.png'}
+            src={avatarSrc}
             alt={member.name}
             className="profile-avatar"
+            onError={handleAvatarError}
           />
         </div>
 
@@ -115,7 +157,9 @@ const Profile = ({ memberId }) => {
 
       <div className="profile-posts">
         <h2 className="profile-posts-title">Posts</h2>
-        {posts.length === 0 ? (
+        {postsError ? (
+          <div className="error-message">Error loading posts: {postsErrObj?.message || 'Unknown error'}</div>
+        ) : posts.length === 0 ? (
           <div className="empty-posts">
             <p>No posts yet</p>
           </div>

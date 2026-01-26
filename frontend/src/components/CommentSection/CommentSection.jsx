@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { commentsAPI } from '../../services/api';
+import { getSafeImageUrl } from '../../utils/imageUtils';
 import './CommentSection.css';
 
 const CommentSection = ({ postId }) => {
@@ -9,6 +10,13 @@ const CommentSection = ({ postId }) => {
   const queryClient = useQueryClient();
   const [commentText, setCommentText] = useState('');
   const [now, setNow] = useState(new Date());
+  const [fallbackAvatars, setFallbackAvatars] = useState({});
+
+  const handleAvatarError = (commentId) => (e) => {
+    e.target.onerror = null;
+    setFallbackAvatars((prev) => ({ ...prev, [commentId]: true }));
+    e.target.src = '/default-avatar.jpg';
+  };
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60000);
@@ -114,9 +122,14 @@ const CommentSection = ({ postId }) => {
           comments.map((comment) => (
             <div key={comment.id} className="comment-item">
               <img
-                src={comment.userImage || '/default-avatar.png'}
+                src={
+                  fallbackAvatars[comment.id]
+                    ? '/default-avatar.jpg'
+                    : getSafeImageUrl([comment.userImage], fallbackAvatars, '/default-avatar.jpg')
+                }
                 alt={comment.userName}
                 className="comment-avatar"
+                onError={handleAvatarError(comment.id)}
               />
               <div className="comment-content">
                 <div className="comment-header">

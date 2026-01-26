@@ -20,9 +20,17 @@ router.get('/', async (req, res, next) => {
     // Get members
     let snapshot = await query.limit(parseInt(limit)).offset(parseInt(offset)).get();
     
-    let members = [];
+    // Collect and deduplicate by name (case-insensitive, trimmed)
+    const members = [];
+    const seenNames = new Set();
     snapshot.forEach(doc => {
-      members.push({ id: doc.id, ...doc.data() });
+      const data = { id: doc.id, ...doc.data() };
+      const key = (data.name || '').trim().toLowerCase();
+      if (key && seenNames.has(key)) {
+        return;
+      }
+      if (key) seenNames.add(key);
+      members.push(data);
     });
 
     // Apply search filter (client-side for simplicity, can be optimized with Algolia)
@@ -72,15 +80,31 @@ router.get('/:id/posts', async (req, res, next) => {
     const { id } = req.params;
     const { limit = 20 } = req.query;
 
-    const snapshot = await db.collection('posts')
-      .where('authorId', '==', id)
-      .orderBy('createdAt', 'desc')
-      .limit(parseInt(limit))
-      .get();
+    let snapshot;
+    try {
+      snapshot = await db.collection('posts')
+        .where('authorId', '==', id)
+        .orderBy('createdAt', 'desc')
+        .limit(parseInt(limit))
+        .get();
+    } catch (err) {
+      console.error('Error fetching posts with orderBy createdAt (falling back without sort):', err);
+      snapshot = await db.collection('posts')
+        .where('authorId', '==', id)
+        .limit(parseInt(limit))
+        .get();
+    }
 
     const posts = [];
     snapshot.forEach(doc => {
       posts.push({ id: doc.id, ...doc.data() });
+    });
+
+    // If we fell back to unsorted fetch, sort by createdAt in memory
+    posts.sort((a, b) => {
+      const aTime = a.createdAt?.toMillis?.() || new Date(a.createdAt).getTime();
+      const bTime = b.createdAt?.toMillis?.() || new Date(b.createdAt).getTime();
+      return bTime - aTime;
     });
 
     res.json({

@@ -1,21 +1,30 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { notificationsAPI } from '../../services/api';
 import NotificationPanel from '../NotificationPanel/NotificationPanel';
+import { getSafeImageUrl } from '../../utils/imageUtils';
 import './Navigation.css';
 
 const Navigation = () => {
   const { currentUser, setUser } = useAuth();
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
+  const defaultAvatar = '/default-avatar.jpg';
+  const [failedSrcs, setFailedSrcs] = useState({});
+  const avatarSrc = getSafeImageUrl(
+    [currentUser?.profileImage, currentUser?.image],
+    failedSrcs,
+    defaultAvatar
+  );
 
   const { data: notificationsData } = useQuery({
     queryKey: ['notifications', currentUser?.id],
     queryFn: () => notificationsAPI.getByUser(currentUser?.id, { unreadOnly: true }),
     enabled: !!currentUser?.id,
     refetchInterval: 30000, // Refetch every 30 seconds
+    retry: false,
   });
 
   const unreadCount = notificationsData?.data?.unreadCount || 0;
@@ -23,6 +32,12 @@ const Navigation = () => {
     setUser(null);
     setShowNotifications(false);
     navigate('/');
+  };
+
+  const handleAvatarError = (e) => {
+    e.target.onerror = null;
+    setFailedSrcs((prev) => ({ ...prev, [avatarSrc]: true }));
+    e.target.src = defaultAvatar;
   };
 
   return (
@@ -72,9 +87,10 @@ const Navigation = () => {
         {currentUser && (
           <div className="nav-user">
             <img
-              src={currentUser.profileImage || currentUser.image || '/default-avatar.png'}
+              src={avatarSrc}
               alt={currentUser.name}
               className="nav-avatar"
+              onError={handleAvatarError}
             />
             <span className="nav-username">{currentUser.name}</span>
             <button className="nav-link nav-logout" onClick={handleLogout}>

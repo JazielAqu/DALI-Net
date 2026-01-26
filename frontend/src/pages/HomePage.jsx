@@ -4,11 +4,13 @@ import { useAuth } from '../context/AuthContext';
 import { membersAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import './HomePage.css';
+import { getSafeImageUrl } from '../utils/imageUtils';
 
 const HomePage = () => {
   const { currentUser, setUser } = useAuth();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [failedAvatars, setFailedAvatars] = useState({});
 
   const { data: membersData, isLoading, error } = useQuery({
     queryKey: ['members', searchTerm],
@@ -25,8 +27,26 @@ const HomePage = () => {
     console.log('Members data:', membersData);
   }
 
+  const getAvatarSrc = (member) =>
+    getSafeImageUrl(
+      [member.profileImage, member.picture, member.image],
+      failedAvatars,
+      '/default-avatar.jpg'
+    );
+
   const handleSelectUser = (member) => {
-    setUser(member);
+    const safeImage = getSafeImageUrl(
+      [member.profileImage, member.picture, member.image],
+      {},
+      '/default-avatar.jpg'
+    );
+    // Store a sanitized image on the user to avoid bad URLs causing flicker elsewhere
+    setUser({
+      ...member,
+      profileImage: safeImage,
+      image: safeImage,
+      picture: safeImage,
+    });
     navigate(`/profile/${member.id}`);
   };
 
@@ -75,11 +95,13 @@ const HomePage = () => {
                   onClick={() => handleSelectUser(member)}
                 >
                   <img
-                    src={member.profileImage || member.picture || member.image || '/default-avatar.png'}
+                    src={getAvatarSrc(member)}
                     alt={member.name}
                     className="member-card-avatar"
                     onError={(e) => {
-                      e.target.src = '/default-avatar.png';
+                      e.target.onerror = null;
+                      setFailedAvatars((prev) => ({ ...prev, [member.id]: true }));
+                      e.target.src = '/default-avatar.jpg';
                     }}
                   />
                   <h3 className="member-card-name">{member.name}</h3>

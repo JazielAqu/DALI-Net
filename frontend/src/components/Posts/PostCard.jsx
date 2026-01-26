@@ -4,12 +4,20 @@ import { useAuth } from '../../context/AuthContext';
 import { likesAPI, commentsAPI } from '../../services/api';
 import LikeButton from '../LikeButton/LikeButton';
 import CommentSection from '../CommentSection/CommentSection';
+import { getSafeImageUrl } from '../../utils/imageUtils';
 import './PostCard.css';
 
 const PostCard = ({ post }) => {
   const { currentUser } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [now, setNow] = useState(new Date());
+  const defaultAvatar = '/default-avatar.jpg';
+  const [failedSrcs, setFailedSrcs] = useState({});
+  const authorAvatar = getSafeImageUrl(
+    [post.authorImage, post.authorImageFallback],
+    failedSrcs,
+    defaultAvatar
+  );
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60000);
@@ -33,6 +41,12 @@ const PostCard = ({ post }) => {
   });
 
   const isLiked = currentUser && likes.some(like => like.userId === currentUser.id);
+
+  const handleAvatarError = (e) => {
+    e.target.onerror = null;
+    setFailedSrcs((prev) => ({ ...prev, [authorAvatar]: true }));
+    e.target.src = defaultAvatar;
+  };
 
   const normalizeDate = (value) => {
     if (!value) return null;
@@ -66,9 +80,10 @@ const PostCard = ({ post }) => {
       <div className="post-header">
         <div className="post-author">
           <img
-            src={post.authorImage || '/default-avatar.png'}
+            src={authorAvatar}
             alt={post.authorName}
             className="post-avatar"
+            onError={handleAvatarError}
           />
           <div className="post-author-info">
             <strong className="post-author-name">{post.authorName}</strong>
