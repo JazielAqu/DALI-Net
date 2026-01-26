@@ -173,17 +173,20 @@ The frontend will run on `http://localhost:5173`
 
 ### Home Page
 The home page displays all DALI lab members in a grid layout. Users can search for members and select one to start using the platform.
+![alt text](<Screenshot 2026-01-26 at 1.12.15 AM.png>)
 
 ### Profile Page
 Each member has a detailed profile showing their information, stats (posts, followers, following), and all their posts.
+![alt text](<Screenshot 2026-01-26 at 1.12.24 AM.png>)
 
 ### Feed Page
 The personalized feed shows posts from members you follow, with the ability to create new posts, like, and comment.
+![alt text](<Screenshot 2026-01-26 at 1.12.33 AM.png>)
 
 ### Notifications
 Real-time notifications for follows, likes, comments, and new posts from members you follow.
+![alt text](<Screenshot 2026-01-26 at 1.12.48 AM.png>)
 
-*Note: Add actual screenshots or demo GIFs when deploying the application*
 
 ## Learning Journey
 
