@@ -56,7 +56,8 @@ const Navigation = () => {
           <Link to="/" className="nav-link">Home</Link>
           {currentUser && (
             <>
-              <Link to="/feed" className="nav-link">Feed</Link>
+              <Link to="/feed" className="nav-link">Lab Feed</Link>
+              <Link to="/following" className="nav-link">Following</Link>
               <Link to={`/profile/${currentUser.id}`} className="nav-link">Profile</Link>
               <button
                 className="nav-link nav-notifications"

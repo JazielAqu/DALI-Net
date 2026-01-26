@@ -5,18 +5,18 @@ import PostCard from '../Posts/PostCard';
 import CreatePost from '../Posts/CreatePost';
 import './Feed.css';
 
-const Feed = ({ userId }) => {
+const Feed = ({ userId, mode = 'all' }) => {
   const { currentUser } = useAuth();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['feed', userId],
+    queryKey: ['feed', userId, mode],
     queryFn: () => {
-      if (userId) {
+      if (mode === 'following' && userId) {
         return postsAPI.getFeed(userId);
       }
       return postsAPI.getAll();
     },
-    enabled: !!userId || !userId, // Always enabled
+    enabled: mode === 'all' || !!userId,
   });
 
   if (isLoading) {

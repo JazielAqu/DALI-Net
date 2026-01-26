@@ -39,10 +39,9 @@ export const generateFeed = async (userId, limit = 20) => {
     for (let i = 0; i < followingIds.length; i += batchSize) {
       const batch = followingIds.slice(i, i + batchSize);
       
+      // Avoid Firestore composite index issues: fetch the batch without orderBy and sort in memory.
       const postsSnapshot = await db.collection('posts')
         .where('authorId', 'in', batch)
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
         .get();
 
       postsSnapshot.forEach(doc => {
