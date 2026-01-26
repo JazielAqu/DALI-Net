@@ -163,4 +163,35 @@ router.delete('/:id', async (req, res, next) => {
   }
 });
 
+// DELETE /api/notifications/user/:userId - Delete all notifications for a user
+router.delete('/user/:userId', async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    const snapshot = await db.collection('notifications')
+      .where('userId', '==', userId)
+      .get();
+
+    if (snapshot.empty) {
+      return res.json({
+        success: true,
+        message: 'No notifications to clear',
+        count: 0,
+      });
+    }
+
+    const batch = db.batch();
+    snapshot.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+
+    res.json({
+      success: true,
+      message: `Cleared ${snapshot.size} notifications`,
+      count: snapshot.size,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
