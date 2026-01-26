@@ -14,11 +14,22 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+].filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true); // allow non-browser tools
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error(`CORS blocked for origin: ${origin}`), false);
+  },
   credentials: true,
-}));
+};
+
+// Middleware
+app.use(cors(corsOptions));
 // Allow slightly larger payloads to support small base64-encoded images.
 // Keep limits conservative to avoid abuse.
 app.use(express.json({ limit: '8mb' }));
