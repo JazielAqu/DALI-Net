@@ -93,6 +93,16 @@ const Profile = ({ memberId }) => {
     e.target.src = defaultAvatar;
   };
 
+  const getBadges = (member) => {
+    const badges = [];
+    if (member.dev) badges.push('Dev');
+    if (member.des) badges.push('Design');
+    if (member.pm) badges.push('PM');
+    if (member.core) badges.push('Core');
+    if (member.mentor) badges.push('Mentor');
+    return badges;
+  };
+
   return (
     <div className="profile-container">
       <div className="profile-header card">
@@ -142,6 +152,16 @@ const Profile = ({ memberId }) => {
               {member.interests.map((interest, idx) => (
                 <span key={idx} className="interest-tag">
                   {interest}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {getBadges(member).length > 0 && (
+            <div className="profile-badges">
+              {getBadges(member).map((badge) => (
+                <span key={badge} className="badge">
+                  {badge}
                 </span>
               ))}
             </div>

@@ -79,6 +79,12 @@
   font-size: 0.875rem;
 }
 
+.profile-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .profile-meta {
   display: flex;
   gap: 1rem;

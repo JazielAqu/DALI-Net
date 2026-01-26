@@ -33,6 +33,13 @@
   display: block;
 }
 
+.logo-text {
+  font-family: 'Cinzel', 'Cinzel Decorative', serif;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  font-size: 1.35rem;
+}
+
 .nav-links {
   display: flex;
   align-items: center;

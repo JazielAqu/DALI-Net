@@ -63,6 +63,16 @@ const HomePage = () => {
     navigate(`/profile/${member.id}`);
   };
 
+  const getBadges = (member) => {
+    const badges = [];
+    if (member.dev) badges.push('Dev');
+    if (member.des) badges.push('Design');
+    if (member.pm) badges.push('PM');
+    if (member.core) badges.push('Core');
+    if (member.mentor) badges.push('Mentor');
+    return badges;
+  };
+
   return (
     <div className="home-page">
       <div className="home-hero">
@@ -123,6 +133,15 @@ const HomePage = () => {
                     <p className="member-card-role">{member.role}</p>
                   )}
                 </div>
+                {getBadges(member).length > 0 && (
+                  <div className="member-badges">
+                    {getBadges(member).map((badge) => (
+                      <span key={badge} className="badge">
+                        {badge}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 {currentUser && currentUser.id !== member.id && (
                   <div className="member-card-actions">
                     <FollowButton
