@@ -1,0 +1,24 @@
+.feed-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.feed-posts {
+  display: flex;
+  flex-direction: column;
+}
+
+.empty-feed {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+}
+
+.error-message {
+  background: #fee;
+  color: var(--error-color);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+}

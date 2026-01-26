@@ -1,0 +1,36 @@
+.like-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1.125rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.like-btn:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  color: var(--primary-color);
+}
+
+.like-btn.liked {
+  color: var(--error-color);
+}
+
+.like-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.like-icon {
+  font-size: 1.25rem;
+}
+
+.like-count {
+  font-size: 0.875rem;
+  font-weight: 500;
+}

@@ -1,0 +1,114 @@
+.home-page {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.home-hero {
+  text-align: center;
+  padding: 3rem 1rem;
+  margin-bottom: 2rem;
+}
+
+.home-hero h1 {
+  font-size: 2.5rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.home-hero p {
+  font-size: 1.125rem;
+  color: var(--text-secondary);
+}
+
+.user-selection {
+  margin-bottom: 2rem;
+}
+
+.user-selection h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.user-selection-hint {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.search-box {
+  margin-bottom: 1.5rem;
+}
+
+.members-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.member-card {
+  background: var(--bg-secondary);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.member-card:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.member-card-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto 1rem;
+  border: 2px solid var(--border-color);
+}
+
+.member-card-name {
+  font-size: 1.125rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.member-card-role {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.welcome-back {
+  text-align: center;
+  padding: 2rem;
+}
+
+.welcome-back h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+}
+
+.welcome-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .home-hero h1 {
+    font-size: 2rem;
+  }
+
+  .members-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+
+  .welcome-actions {
+    flex-direction: column;
+  }
+}
