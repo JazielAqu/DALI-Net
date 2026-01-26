@@ -77,23 +77,6 @@ const Navigation = () => {
           )}
         </div>
 
-        {!currentUser && (
-          <div className="nav-user-select">
-            <select
-              onChange={(e) => {
-                if (e.target.value) {
-                  // In a real app, this would be handled by authentication
-                  // For demo, we'll just show a message
-                  alert('Please select a user from the home page');
-                }
-              }}
-              className="user-select"
-            >
-              <option value="">Select User</option>
-            </select>
-          </div>
-        )}
-
         {currentUser && (
           <div className="nav-user">
             <img
