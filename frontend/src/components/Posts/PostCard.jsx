@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
+import { Link } from 'react-router-dom';
 import { likesAPI, commentsAPI } from '../../services/api';
 import LikeButton from '../LikeButton/LikeButton';
 import CommentSection from '../CommentSection/CommentSection';
@@ -79,16 +80,18 @@ const PostCard = ({ post }) => {
     <div className="post-card">
       <div className="post-header">
         <div className="post-author">
-          <img
-            src={authorAvatar}
-            alt={post.authorName}
-            className="post-avatar"
-            onError={handleAvatarError}
-          />
-          <div className="post-author-info">
-            <strong className="post-author-name">{post.authorName}</strong>
-            <span className="post-time">{formatDate(post.createdAt)}</span>
-          </div>
+          <Link to={`/profile/${post.authorId}`} className="post-author-link">
+            <img
+              src={authorAvatar}
+              alt={post.authorName}
+              className="post-avatar"
+              onError={handleAvatarError}
+            />
+            <div className="post-author-info">
+              <strong className="post-author-name">{post.authorName}</strong>
+              <span className="post-time">{formatDate(post.createdAt)}</span>
+            </div>
+          </Link>
         </div>
         {currentUser && currentUser.id === post.authorId && (
           <button className="post-menu-btn">⋯</button>

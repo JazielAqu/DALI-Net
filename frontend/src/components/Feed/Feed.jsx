@@ -41,7 +41,7 @@ const Feed = ({ userId, mode = 'all' }) => {
 
   return (
     <div className="feed-container">
-      {currentUser && currentUser.id === userId && (
+      {currentUser && (
         <CreatePost />
       )}
       

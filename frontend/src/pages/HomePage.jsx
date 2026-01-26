@@ -143,7 +143,10 @@ const HomePage = () => {
                   </div>
                 )}
                 {currentUser && currentUser.id !== member.id && (
-                  <div className="member-card-actions">
+                  <div
+                    className="member-card-actions"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <FollowButton
                       followerId={currentUser.id}
                       followingId={member.id}
