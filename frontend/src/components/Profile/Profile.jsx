@@ -11,6 +11,7 @@ const Profile = ({ memberId }) => {
   const { currentUser } = useAuth();
 
   const defaultAvatar = '/default-avatar.jpg';
+  // Track failed URLs so if the image changes we retry.
   const [failedSrcs, setFailedSrcs] = useState({});
 
   const { data: memberData, isLoading, isError: memberError, error: memberErrObj } = useQuery({
@@ -88,7 +89,7 @@ const Profile = ({ memberId }) => {
 
   const handleAvatarError = (e) => {
     e.target.onerror = null;
-    setFailedSrcs((prev) => ({ ...prev, [avatarSrc]: true }));
+    setFailedSrcs((prev) => ({ ...prev, [e.target.src]: true }));
     e.target.src = defaultAvatar;
   };
 

@@ -14,7 +14,7 @@ const CommentSection = ({ postId }) => {
 
   const handleAvatarError = (commentId) => (e) => {
     e.target.onerror = null;
-    setFallbackAvatars((prev) => ({ ...prev, [commentId]: true }));
+    setFallbackAvatars((prev) => ({ ...prev, [e.target.src]: true }));
     e.target.src = '/default-avatar.jpg';
   };
 
@@ -123,7 +123,7 @@ const CommentSection = ({ postId }) => {
             <div key={comment.id} className="comment-item">
               <img
                 src={
-                  fallbackAvatars[comment.id]
+                  fallbackAvatars[comment.userImage]
                     ? '/default-avatar.jpg'
                     : getSafeImageUrl([comment.userImage], fallbackAvatars, '/default-avatar.jpg')
                 }

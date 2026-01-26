@@ -44,7 +44,7 @@ const PostCard = ({ post }) => {
 
   const handleAvatarError = (e) => {
     e.target.onerror = null;
-    setFailedSrcs((prev) => ({ ...prev, [authorAvatar]: true }));
+    setFailedSrcs((prev) => ({ ...prev, [e.target.src]: true }));
     e.target.src = defaultAvatar;
   };
 

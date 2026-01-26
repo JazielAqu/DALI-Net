@@ -6,7 +6,7 @@ const router = express.Router();
 // GET /api/members - Get all members (with pagination, search, filter)
 router.get('/', async (req, res, next) => {
   try {
-    const { search, role, year, limit = 50, offset = 0 } = req.query;
+    const { search, role, year, limit = 500 } = req.query;
     let query = db.collection('members');
 
     // Apply filters
@@ -17,20 +17,19 @@ router.get('/', async (req, res, next) => {
       query = query.where('year', '==', year);
     }
 
-    // Get members
-    let snapshot = await query.limit(parseInt(limit)).offset(parseInt(offset)).get();
+    // Get members (simple fetch to avoid index errors and missing results)
+    let snapshot;
+    try {
+      snapshot = await query.limit(parseInt(limit)).get();
+    } catch (err) {
+      console.error('Error fetching members, falling back to full fetch:', err);
+      snapshot = await db.collection('members').limit(500).get();
+    }
     
-    // Collect and deduplicate by name (case-insensitive, trimmed)
-    const members = [];
-    const seenNames = new Set();
+    // Collect all members (no dedup to preserve full list)
+    let members = [];
     snapshot.forEach(doc => {
-      const data = { id: doc.id, ...doc.data() };
-      const key = (data.name || '').trim().toLowerCase();
-      if (key && seenNames.has(key)) {
-        return;
-      }
-      if (key) seenNames.add(key);
-      members.push(data);
+      members.push({ id: doc.id, ...doc.data() });
     });
 
     // Apply search filter (client-side for simplicity, can be optimized with Algolia)

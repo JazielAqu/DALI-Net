@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { membersAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import FollowButton from '../components/FollowButton/FollowButton';
 import './HomePage.css';
 import { getSafeImageUrl } from '../utils/imageUtils';
 
@@ -10,6 +11,7 @@ const HomePage = () => {
   const { currentUser, setUser } = useAuth();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  // Track failed URLs (not ids) so changing an image re-attempts load.
   const [failedAvatars, setFailedAvatars] = useState({});
 
   const { data: membersData, isLoading, error } = useQuery({
@@ -35,18 +37,21 @@ const HomePage = () => {
     );
 
   const handleSelectUser = (member) => {
-    const safeImage = getSafeImageUrl(
-      [member.profileImage, member.picture, member.image],
-      {},
-      '/default-avatar.jpg'
-    );
-    // Store a sanitized image on the user to avoid bad URLs causing flicker elsewhere
-    setUser({
-      ...member,
-      profileImage: safeImage,
-      image: safeImage,
-      picture: safeImage,
-    });
+    if (!currentUser) {
+      const safeImage = getSafeImageUrl(
+        [member.profileImage, member.picture, member.image],
+        {},
+        '/default-avatar.jpg'
+      );
+      // Persist as the active user when not signed in yet
+      setUser({
+        ...member,
+        profileImage: safeImage,
+        image: safeImage,
+        picture: safeImage,
+      });
+    }
+    // Always navigate to the selected member's profile
     navigate(`/profile/${member.id}`);
   };
 
@@ -57,63 +62,72 @@ const HomePage = () => {
         <p>Connect with DALI lab members and share your projects!</p>
       </div>
 
-      {!currentUser && (
-        <div className="user-selection card">
-          <h2>Select a User to Get Started</h2>
-          <p className="user-selection-hint">
-            Choose a member to view their profile and interact with the platform
-          </p>
+      <div className="user-selection card">
+        <h2>Select a User to Get Started</h2>
+        <p className="user-selection-hint">
+          Choose a member to view their profile and interact with the platform
+        </p>
 
-          <div className="search-box">
-            <input
-              type="text"
-              className="input"
-              placeholder="Search members..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        <div className="search-box">
+          <input
+            type="text"
+            className="input"
+            placeholder="Search members..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        {isLoading ? (
+          <div className="spinner"></div>
+        ) : error ? (
+          <div className="error-message">
+            <p>Error loading members: {error.message}</p>
+            <p>Make sure the backend server is running on http://localhost:3001</p>
           </div>
-
-          {isLoading ? (
-            <div className="spinner"></div>
-          ) : error ? (
-            <div className="error-message">
-              <p>Error loading members: {error.message}</p>
-              <p>Make sure the backend server is running on http://localhost:3001</p>
-            </div>
-          ) : members.length === 0 ? (
-            <div className="empty-state">
-              <p>No members found.</p>
-              <p>Make sure you've run the seeder: <code>cd backend && npm run seed</code></p>
-            </div>
-          ) : (
-            <div className="members-grid">
-              {members.map((member) => (
-                <div
-                  key={member.id}
-                  className="member-card"
-                  onClick={() => handleSelectUser(member)}
-                >
-                  <img
-                    src={getAvatarSrc(member)}
-                    alt={member.name}
-                    className="member-card-avatar"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      setFailedAvatars((prev) => ({ ...prev, [member.id]: true }));
-                      e.target.src = '/default-avatar.jpg';
-                    }}
-                  />
+        ) : members.length === 0 ? (
+          <div className="empty-state">
+            <p>No members found.</p>
+            <p>Make sure you've run the seeder: <code>cd backend && npm run seed</code></p>
+          </div>
+        ) : (
+          <div className="members-grid">
+            {members.map((member) => (
+              <div
+                key={member.id}
+                className="member-card"
+                onClick={() => handleSelectUser(member)}
+              >
+                <img
+                  src={getAvatarSrc(member)}
+                  alt={member.name}
+                  className="member-card-avatar"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    const failedSrc = e.target.src;
+                    setFailedAvatars((prev) => ({ ...prev, [failedSrc]: true }));
+                    e.target.src = '/default-avatar.jpg';
+                  }}
+                />
+                <div className="member-card-header">
                   <h3 className="member-card-name">{member.name}</h3>
                   {member.role && (
                     <p className="member-card-role">{member.role}</p>
                   )}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                {currentUser && currentUser.id !== member.id && (
+                  <div className="member-card-actions">
+                    <FollowButton
+                      followerId={currentUser.id}
+                      followingId={member.id}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {currentUser && (
         <div className="welcome-back card">
