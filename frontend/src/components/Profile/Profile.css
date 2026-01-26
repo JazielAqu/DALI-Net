@@ -85,6 +85,57 @@
   gap: 0.5rem;
 }
 
+.profile-image-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profile-image-card {
+  margin-top: 0.5rem;
+}
+
+.profile-image-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.profile-image-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.profile-image-form h3 {
+  margin-top: 0.5rem;
+  color: var(--text-primary);
+}
+
+.file-input-label {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.file-input {
+  padding: 0.5rem 0;
+}
+
+.selected-file {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.success-message {
+  color: #0f9d58;
+  font-size: 0.9rem;
+}
+
 .profile-meta {
   display: flex;
   gap: 1rem;

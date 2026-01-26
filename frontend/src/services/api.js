@@ -17,6 +17,7 @@ export const membersAPI = {
   getFollowers: (id) => api.get(`/members/${id}/followers`),
   getFollowing: (id) => api.get(`/members/${id}/following`),
   create: (data) => api.post('/members', data),
+  update: (id, data) => api.patch(`/members/${id}`, data),
 };
 
 // Posts API

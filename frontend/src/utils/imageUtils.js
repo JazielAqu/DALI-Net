@@ -4,6 +4,12 @@ export const getSafeImageUrl = (candidates = [], failedLookup = {}, fallback = '
   for (const url of candidates) {
     if (!url) continue;
     if (failedLookup[url]) continue;
+
+    // Allow data URIs for uploaded profile photos
+    if (typeof url === 'string' && url.startsWith('data:image/')) {
+      return url;
+    }
+
     try {
       const parsed = new URL(url);
       if (!['http:', 'https:'].includes(parsed.protocol)) continue;

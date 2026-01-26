@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { membersAPI } from '../../services/api';
 import FollowButton from '../FollowButton/FollowButton';
@@ -8,7 +8,13 @@ import { getSafeImageUrl } from '../../utils/imageUtils';
 import './Profile.css';
 
 const Profile = ({ memberId }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, setUser } = useAuth();
+  const queryClient = useQueryClient();
+  const [newImageUrl, setNewImageUrl] = useState('');
+  const [newImageData, setNewImageData] = useState('');
+  const [newImageFileName, setNewImageFileName] = useState('');
+  const [imageError, setImageError] = useState('');
+  const [showImageForm, setShowImageForm] = useState(false);
 
   const defaultAvatar = '/default-avatar.jpg';
   // Track failed URLs so if the image changes we retry.
@@ -40,6 +46,44 @@ const Profile = ({ memberId }) => {
     queryFn: () => membersAPI.getFollowing(memberId),
     enabled: !!memberId,
     retry: false,
+  });
+
+  const updateImageMutation = useMutation({
+    mutationFn: (data) => membersAPI.update(memberId, data),
+    onSuccess: (res) => {
+      const updated = res?.data?.data;
+      // Update cache eagerly for instant UI feedback
+      if (updated) {
+        queryClient.setQueryData(['member', memberId], (old) => {
+          if (!old?.data?.data) return old;
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              data: { ...old.data.data, ...updated },
+            },
+          };
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['member', memberId] });
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      if (updated && currentUser && currentUser.id === memberId) {
+        const safeImg = updated.profileImage || updated.image || updated.picture;
+        setUser({ ...currentUser, profileImage: safeImg, image: safeImg, picture: safeImg });
+      }
+      setNewImageUrl('');
+      setNewImageData('');
+      setNewImageFileName('');
+      setImageError('');
+      setShowImageForm(false);
+    },
+    onError: (err) => {
+      const msg =
+        err?.response?.data?.error?.message ||
+        err?.message ||
+        'Could not update profile photo. Please try again.';
+      setImageError(msg);
+    },
   });
 
   const avatarSrc = memberData?.data?.data
@@ -103,6 +147,45 @@ const Profile = ({ memberId }) => {
     return badges;
   };
 
+  const handleImageSubmit = (e) => {
+    e.preventDefault();
+    const payload = (newImageData || newImageUrl).trim();
+    if (!payload) {
+      setImageError('Please select a file or enter an image URL');
+      return;
+    }
+    updateImageMutation.mutate({
+      profileImage: payload,
+      image: payload,
+      picture: payload,
+    });
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setNewImageData('');
+      setNewImageFileName('');
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      setImageError('Please select an image file');
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      setImageError('Image must be under 3MB');
+      return;
+    }
+    setImageError('');
+    setNewImageFileName(file.name);
+    setNewImageUrl('');
+    const reader = new FileReader();
+    reader.onload = () => {
+      setNewImageData(reader.result?.toString() || '');
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="profile-container">
       <div className="profile-header card">
@@ -164,6 +247,74 @@ const Profile = ({ memberId }) => {
                   {badge}
                 </span>
               ))}
+            </div>
+          )}
+
+          {isOwnProfile && (
+            <div className="profile-image-card card">
+              <div className="profile-image-card-header">
+                <div>
+                  <h3>Profile photo</h3>
+                  <p className="muted">Upload a new image or paste a URL.</p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowImageForm((prev) => !prev)}
+                >
+                  {showImageForm ? 'Close' : 'Change photo'}
+                </button>
+              </div>
+              {showImageForm && (
+                <form className="profile-image-form" onSubmit={handleImageSubmit}>
+                  <label className="file-input-label">
+                    <span>Select image (optional)</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="file-input"
+                    />
+                  </label>
+                  {newImageFileName && (
+                    <div className="selected-file">Selected: {newImageFileName}</div>
+                  )}
+                  <input
+                    type="url"
+                    className="input"
+                    placeholder="Image URL (optional)"
+                    value={newImageUrl}
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                    style={{ margin: '0.75rem 0' }}
+                  />
+                  {imageError && <div className="error-message">{imageError}</div>}
+                  {updateImageMutation.isSuccess && !imageError && (
+                    <div className="success-message">Photo updated</div>
+                  )}
+                  <div className="profile-image-actions">
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
+                      disabled={updateImageMutation.isPending}
+                    >
+                      {updateImageMutation.isPending ? 'Saving...' : 'Save photo'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        setNewImageData('');
+                        setNewImageUrl('');
+                        setNewImageFileName('');
+                        setImageError('');
+                        setShowImageForm(false);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           )}
 

@@ -211,4 +211,47 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+// PATCH /api/members/:id - Update member (e.g., profile image)
+router.patch('/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const updates = {};
+
+    const allowedFields = ['profileImage', 'image', 'picture', 'bio', 'role'];
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    });
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'No valid fields provided for update' },
+      });
+    }
+
+    const memberRef = db.collection('members').doc(id);
+    const memberDoc = await memberRef.get();
+
+    if (!memberDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        error: { message: 'Member not found' },
+      });
+    }
+
+    updates.updatedAt = new Date();
+    await memberRef.update(updates);
+
+    const updatedDoc = await memberRef.get();
+    res.json({
+      success: true,
+      data: { id: updatedDoc.id, ...updatedDoc.data() },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
