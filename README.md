@@ -2,9 +2,7 @@
 
 A full-stack social media application built for the DALI Lab, allowing members to connect, share posts, follow each other, and interact through likes, comments, and notifications.
 
-![DALI Net](https://img.shields.io/badge/DALI-Net-6366f1?style=for-the-badge)
-
-## 🚀 Features
+## Features
 
 - **User Profiles**: View member profiles with bio, interests, role, and year
 - **Posts**: Create, view, edit, and delete posts with text and images
@@ -15,7 +13,7 @@ A full-stack social media application built for the DALI Lab, allowing members t
 - **Personalized Feed**: View posts from members you follow
 - **Search**: Search for members by name or bio
 
-## 🏗️ Architecture
+## Architecture
 
 ### Backend
 - **Framework**: Express.js Node.js
