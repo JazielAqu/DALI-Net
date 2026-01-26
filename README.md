@@ -278,7 +278,7 @@ for (let i = 0; i < followingIds.length; i += batchSize) {
 }
 ```
 
-## 🤖 AI Usage
+## AI Usage
 
 I used ChatGPT during development to assist with:
 
@@ -298,6 +298,6 @@ I used ChatGPT during development to assist with:
 - The AI's initial suggestion didn't account for Firestore's 10-item limit on `in` queries
 - I had to implement batching logic to handle cases where a user follows more than 10 people
 - Added client-side sorting to merge results from multiple batches
-- Implemented a fallback to show all posts if the user doesn't follow anyone yet
+- Implemented a fallback to notify the user if they don't follow anybody
 
 **NOTE** I Always verify AI suggestions against documentation, especially regarding limitations and what my goal is in what I am trying to develop
