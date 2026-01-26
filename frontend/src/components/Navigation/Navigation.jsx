@@ -11,6 +11,7 @@ const Navigation = () => {
   const { currentUser, setUser } = useAuth();
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [badgeCleared, setBadgeCleared] = useState(false);
   const defaultAvatar = '/default-avatar.jpg';
   const [failedSrcs, setFailedSrcs] = useState({});
   const avatarSrc = getSafeImageUrl(
@@ -28,6 +29,7 @@ const Navigation = () => {
   });
 
   const unreadCount = notificationsData?.data?.unreadCount || 0;
+  const displayUnread = badgeCleared ? 0 : unreadCount;
   const handleLogout = () => {
     setUser(null);
     setShowNotifications(false);
@@ -61,11 +63,14 @@ const Navigation = () => {
               <Link to={`/profile/${currentUser.id}`} className="nav-link">Profile</Link>
               <button
                 className="nav-link nav-notifications"
-                onClick={() => setShowNotifications(true)}
+                onClick={() => {
+                  setShowNotifications(true);
+                  setBadgeCleared(true);
+                }}
               >
                 🔔
-                {unreadCount > 0 && (
-                  <span className="notification-badge">{unreadCount}</span>
+                {displayUnread > 0 && (
+                  <span className="notification-badge">{displayUnread}</span>
                 )}
               </button>
             </>

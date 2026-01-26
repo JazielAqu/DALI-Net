@@ -58,6 +58,7 @@ export const notificationsAPI = {
   create: (data) => api.post('/notifications', data),
   markAsRead: (id) => api.patch(`/notifications/${id}/read`),
   markAllAsRead: (userId) => api.patch(`/notifications/${userId}/read-all`),
+  clearAll: (userId) => api.delete(`/notifications/user/${userId}`),
   delete: (id) => api.delete(`/notifications/${id}`),
 };
 

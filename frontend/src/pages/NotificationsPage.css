@@ -10,6 +10,27 @@
   margin-bottom: 2rem;
 }
 
+.notifications-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.notification-delete {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: color 0.2s;
+}
+
+.notification-delete:hover {
+  color: var(--error-color);
+}
+
 .notifications-list {
   display: flex;
   flex-direction: column;
