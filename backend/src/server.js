@@ -28,14 +28,11 @@ const corsOptions = {
   credentials: true,
 };
 
-// Middleware
 app.use(cors(corsOptions));
-// Allow slightly larger payloads to support small base64-encoded images.
-// Keep limits conservative to avoid abuse.
+
 app.use(express.json({ limit: '8mb' }));
 app.use(express.urlencoded({ extended: true, limit: '8mb' }));
 
-// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'DALI Net API is running' });
 });
