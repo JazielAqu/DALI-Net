@@ -7,6 +7,7 @@ import './CommentSection.css';
 
 const CommentSection = ({ postId }) => {
   const { currentUser } = useAuth();
+  const isGuest = currentUser?.role === 'guest';
   const queryClient = useQueryClient();
   const [commentText, setCommentText] = useState('');
   const [now, setNow] = useState(new Date());
@@ -53,7 +54,7 @@ const CommentSection = ({ postId }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!commentText.trim() || !currentUser) return;
+    if (!commentText.trim() || !currentUser || isGuest) return;
 
     createMutation.mutate({
       userId: currentUser.id,
@@ -91,7 +92,7 @@ const CommentSection = ({ postId }) => {
 
   return (
     <div className="comment-section">
-      {currentUser && (
+      {currentUser && !isGuest && (
         <form className="comment-form" onSubmit={handleSubmit}>
           <input
             type="text"

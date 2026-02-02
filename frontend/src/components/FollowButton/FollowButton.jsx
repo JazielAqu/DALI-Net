@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { followingAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import './FollowButton.css';
 
 const FollowButton = ({ followerId, followingId }) => {
+  const { currentUser } = useAuth();
+  const isGuest = currentUser?.role === 'guest';
   const queryClient = useQueryClient();
   const [isFollowing, setIsFollowing] = useState(false);
 
@@ -43,6 +46,9 @@ const FollowButton = ({ followerId, followingId }) => {
   });
 
   const handleClick = () => {
+    if (!currentUser || isGuest) {
+      return;
+    }
     if (currentlyFollowing || isFollowing) {
       unfollowMutation.mutate();
     } else {
@@ -57,7 +63,7 @@ const FollowButton = ({ followerId, followingId }) => {
     <button
       className={`follow-btn ${following ? 'following' : ''}`}
       onClick={handleClick}
-      disabled={isLoading}
+      disabled={isLoading || !currentUser || isGuest}
     >
       {isLoading ? '...' : following ? 'Following' : 'Follow'}
     </button>

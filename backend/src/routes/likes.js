@@ -2,18 +2,21 @@ import express from 'express';
 import db from '../services/firebase.js';
 import { createLike } from '../models/Like.js';
 import { createNotification } from '../models/Notification.js';
+import { requireAuth, rejectGuest } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // POST /api/likes - Like a post
-router.post('/', async (req, res, next) => {
+router.post('/', requireAuth, async (req, res, next) => {
   try {
-    const { userId, postId } = req.body;
+    if (req.user.role === 'guest') return rejectGuest(res);
+    const userId = req.user.uid;
+    const { postId } = req.body;
 
-    if (!userId || !postId) {
+    if (!postId) {
       return res.status(400).json({
         success: false,
-        error: { message: 'userId and postId are required' },
+        error: { message: 'postId is required' },
       });
     }
 
@@ -70,9 +73,11 @@ router.post('/', async (req, res, next) => {
 });
 
 // DELETE /api/likes/:userId/:postId - Unlike a post
-router.delete('/:userId/:postId', async (req, res, next) => {
+router.delete('/:postId', requireAuth, async (req, res, next) => {
   try {
-    const { userId, postId } = req.params;
+    if (req.user.role === 'guest') return rejectGuest(res);
+    const { postId } = req.params;
+    const userId = req.user.uid;
 
     const snapshot = await db.collection('likes')
       .where('userId', '==', userId)

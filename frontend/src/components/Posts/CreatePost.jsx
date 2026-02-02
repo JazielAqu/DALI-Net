@@ -6,6 +6,7 @@ import './CreatePost.css';
 
 const CreatePost = () => {
   const { currentUser } = useAuth();
+  const isGuest = currentUser?.role === 'guest';
   const queryClient = useQueryClient();
   const [content, setContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -30,7 +31,7 @@ const CreatePost = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (!content.trim() || isGuest) return;
 
     const imagePayload = (imageData || imageUrl).trim();
 
@@ -66,6 +67,10 @@ const CreatePost = () => {
     };
     reader.readAsDataURL(file);
   };
+
+  if (isGuest) {
+    return null;
+  }
 
   if (!isOpen) {
     return (

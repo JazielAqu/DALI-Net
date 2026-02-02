@@ -40,6 +40,10 @@ export const requireAuth = async (req, res, next) => {
   }
 };
 
+export const rejectGuest = (res, message = 'Guest accounts cannot perform this action') => {
+  return res.status(403).json({ success: false, error: { message } });
+};
+
 export const ensureSelf = (req, res, next) => {
   if (!req.user?.id || req.user.id !== req.body.userId && req.user.id !== req.params.userId) {
     return res.status(403).json({ success: false, error: { message: 'Forbidden' } });

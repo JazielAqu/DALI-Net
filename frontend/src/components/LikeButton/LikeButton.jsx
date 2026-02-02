@@ -5,10 +5,11 @@ import './LikeButton.css';
 
 const LikeButton = ({ postId, isLiked: initialIsLiked, likeCount: initialLikeCount }) => {
   const { currentUser } = useAuth();
+  const isGuest = currentUser?.role === 'guest';
   const queryClient = useQueryClient();
 
   const likeMutation = useMutation({
-    mutationFn: () => likesAPI.like({ userId: currentUser.id, postId }),
+    mutationFn: () => likesAPI.like({ postId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['likes', postId] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
@@ -17,7 +18,7 @@ const LikeButton = ({ postId, isLiked: initialIsLiked, likeCount: initialLikeCou
   });
 
   const unlikeMutation = useMutation({
-    mutationFn: () => likesAPI.unlike(currentUser.id, postId),
+    mutationFn: () => likesAPI.unlike(postId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['likes', postId] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
@@ -26,8 +27,8 @@ const LikeButton = ({ postId, isLiked: initialIsLiked, likeCount: initialLikeCou
   });
 
   const handleClick = () => {
-    if (!currentUser) {
-      alert('Please select a user to like posts');
+    if (!currentUser || isGuest) {
+      alert('Sign in (not as guest) to like posts');
       return;
     }
 
@@ -44,7 +45,7 @@ const LikeButton = ({ postId, isLiked: initialIsLiked, likeCount: initialLikeCou
     <button
       className={`like-btn ${initialIsLiked ? 'liked' : ''}`}
       onClick={handleClick}
-      disabled={isLoading || !currentUser}
+      disabled={isLoading || !currentUser || isGuest}
     >
       <span className="like-icon">{initialIsLiked ? '❤️' : '🤍'}</span>
       {initialLikeCount > 0 && <span className="like-count">{initialLikeCount}</span>}
