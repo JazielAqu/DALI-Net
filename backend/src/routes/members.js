@@ -189,7 +189,68 @@ router.get('/:id/following', async (req, res, next) => {
   }
 });
 
-// POST /api/members - Create new member (for testing)
+// POST /api/members/self - Create minimal profile for authenticated user
+// (placed before the generic "/" route so /self does not get swallowed)
+router.post('/self', requireAuth, async (req, res, next) => {
+  try {
+    const uid = req.user.uid;
+    const existing = await db.collection('members').doc(uid).get();
+    if (existing.exists) {
+      return res.status(200).json({ success: true, data: { id: uid, ...existing.data() } });
+    }
+    const avatar =
+      req.user.picture ||
+      req.user.image ||
+      req.user.photoURL ||
+      '/default-avatar.jpg';
+
+    const member = {
+      name: req.user.name || 'New Member',
+      email: req.user.email || '',
+      profileImage: avatar,
+      image: avatar,
+      picture: avatar,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    await db.collection('members').doc(uid).set(member);
+    res.status(201).json({ success: true, data: { id: uid, ...member } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /api/members/self - Remove the authenticated user's profile and related edges
+router.delete('/self', requireAuth, async (req, res, next) => {
+  try {
+    const uid = req.user.uid;
+
+    // Delete member document if it exists
+    await db.collection('members').doc(uid).delete();
+
+    // Best-effort cleanup of edges (follow, likes, posts, comments)
+    const cleanCollection = async (collection, field) => {
+      const snap = await db.collection(collection).where(field, '==', uid).get();
+      const deletions = [];
+      snap.forEach((doc) => deletions.push(doc.ref.delete()));
+      return Promise.all(deletions);
+    };
+
+    await Promise.all([
+      cleanCollection('following', 'followerId'),
+      cleanCollection('following', 'followingId'),
+      cleanCollection('likes', 'userId'),
+      cleanCollection('posts', 'authorId'),
+      cleanCollection('comments', 'userId'),
+    ]);
+
+    res.json({ success: true, data: { id: uid, deleted: true } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/members - Create new member (for testing/seeding)
 router.post('/', async (req, res, next) => {
   try {
     const memberData = req.body;
@@ -212,34 +273,44 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// POST /api/members/self - Create minimal profile for authenticated user
-router.post('/self', requireAuth, async (req, res, next) => {
-  try {
-    const uid = req.user.uid;
-    const existing = await db.collection('members').doc(uid).get();
-    if (existing.exists) {
-      return res.status(200).json({ success: true, data: { id: uid, ...existing.data() } });
-    }
-    const member = {
-      name: req.user.name || 'New Member',
-      email: req.user.email || '',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    await db.collection('members').doc(uid).set(member);
-    res.status(201).json({ success: true, data: { id: uid, ...member } });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// PATCH /api/members/:id - Update member (e.g., profile image)
+// PATCH /api/members/:id - Update member (profile fields)
 router.patch('/:id', requireAuth, async (req, res, next) => {
   try {
     const { id } = req.params;
+
+    if (req.user.uid !== id) {
+      return res.status(403).json({
+        success: false,
+        error: { message: 'You can only update your own profile' },
+      });
+    }
+
     const updates = {};
 
-    const allowedFields = ['profileImage', 'image', 'picture', 'bio', 'role'];
+    const allowedFields = [
+      'name',
+      'year',
+      'major',
+      'minor',
+      'birthday',
+      'home',
+      'quote',
+      'favoriteThing1',
+      'favoriteThing2',
+      'favoriteThing3',
+      'favoriteDartmouthTradition',
+      'funFact',
+      'bio',
+      'role',
+      'dev',
+      'des',
+      'pm',
+      'core',
+      'mentor',
+      'profileImage',
+      'image',
+      'picture',
+    ];
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
         updates[field] = req.body[field];

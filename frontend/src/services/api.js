@@ -33,6 +33,7 @@ export const membersAPI = {
   create: (data) => api.post('/members', data),
   update: (id, data) => api.patch(`/members/${id}`, data),
   createSelf: () => api.post('/members/self'),
+  deleteSelf: () => api.delete('/members/self'),
 };
 
 // Posts API

@@ -8,14 +8,14 @@ import { getSafeImageUrl } from '../../utils/imageUtils';
 import './Navigation.css';
 
 const Navigation = () => {
-  const { currentUser, logout, personaProfile } = useAuth();
+  const { currentUser, logout, personaProfile, needsProfile } = useAuth();
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
   const [badgeCleared, setBadgeCleared] = useState(false);
-  const defaultAvatar = '/default-avatar.jpg';
+  const defaultAvatar = `${import.meta.env.BASE_URL || '/'}default-avatar.jpg`;
   const [failedSrcs, setFailedSrcs] = useState({});
   const avatarSrc = getSafeImageUrl(
-    [personaProfile?.image, currentUser?.profileImage, currentUser?.image],
+    [personaProfile?.image, currentUser?.profileImage, currentUser?.image, currentUser?.picture],
     failedSrcs,
     defaultAvatar
   );
@@ -57,25 +57,29 @@ const Navigation = () => {
         <div className="nav-links">
           <Link to="/" className="nav-link">Home</Link>
           {currentUser ? (
-            <>
-              <Link to="/feed" className="nav-link">Lab Feed</Link>
-              <Link to="/following" className="nav-link">Following</Link>
-              {currentUser.role !== 'guest' && (
-                <Link to={`/profile/${currentUser.id}`} className="nav-link">Profile</Link>
-              )}
-              <button
-                className="nav-link nav-notifications"
-                onClick={() => {
-                  setShowNotifications(true);
-                  setBadgeCleared(true);
-                }}
-              >
-                🔔
-                {displayUnread > 0 && (
-                  <span className="notification-badge">{displayUnread}</span>
+            needsProfile && currentUser.role !== 'guest' ? (
+              <Link to="/profile/edit" className="nav-link highlight">Complete Profile</Link>
+            ) : (
+              <>
+                <Link to="/feed" className="nav-link">Lab Feed</Link>
+                <Link to="/following" className="nav-link">Following</Link>
+                {currentUser.role !== 'guest' && (
+                  <Link to={`/profile/${currentUser.id}`} className="nav-link">Profile</Link>
                 )}
-              </button>
-            </>
+                <button
+                  className="nav-link nav-notifications"
+                  onClick={() => {
+                    setShowNotifications(true);
+                    setBadgeCleared(true);
+                  }}
+                >
+                  🔔
+                  {displayUnread > 0 && (
+                    <span className="notification-badge">{displayUnread}</span>
+                  )}
+                </button>
+              </>
+            )
           ) : (
             <Link to="/login" className="nav-link">Login</Link>
           )}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { membersAPI } from '../../services/api';
@@ -8,15 +9,18 @@ import { getSafeImageUrl } from '../../utils/imageUtils';
 import './Profile.css';
 
 const Profile = ({ memberId }) => {
-  const { currentUser, setUser } = useAuth();
+  const { currentUser, setUser, logout } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [newImageUrl, setNewImageUrl] = useState('');
   const [newImageData, setNewImageData] = useState('');
   const [newImageFileName, setNewImageFileName] = useState('');
   const [imageError, setImageError] = useState('');
   const [showImageForm, setShowImageForm] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
-  const defaultAvatar = '/default-avatar.jpg';
+  // Respect Vite base path in dev/prod
+  const defaultAvatar = `${import.meta.env.BASE_URL || '/'}default-avatar.jpg`;
   // Track failed URLs so if the image changes we retry.
   const [failedSrcs, setFailedSrcs] = useState({});
 
@@ -83,6 +87,21 @@ const Profile = ({ memberId }) => {
         err?.message ||
         'Could not update profile photo. Please try again.';
       setImageError(msg);
+    },
+  });
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: () => membersAPI.deleteSelf(),
+    onSuccess: () => {
+      logout();
+      navigate('/login');
+    },
+    onError: (err) => {
+      const msg =
+        err?.response?.data?.error?.message ||
+        err?.message ||
+        'Could not delete account. Please try again.';
+      setDeleteError(msg);
     },
   });
 
@@ -326,6 +345,26 @@ const Profile = ({ memberId }) => {
           )}
         </div>
       </div>
+
+      {isOwnProfile && (
+        <div className="card danger-card" style={{ marginTop: '1rem' }}>
+          <h3>Delete account</h3>
+          <p className="muted">
+            This removes your profile, posts, likes, and follows. You’ll need to create a new account to use the app again.
+          </p>
+          {deleteError && <div className="error-message">{deleteError}</div>}
+          <button
+            className="btn btn-danger"
+            disabled={deleteAccountMutation.isPending}
+            onClick={() => {
+              const confirmDelete = window.confirm('Delete your account? This cannot be undone.');
+              if (confirmDelete) deleteAccountMutation.mutate();
+            }}
+          >
+            {deleteAccountMutation.isPending ? 'Deleting...' : 'Delete my account'}
+          </button>
+        </div>
+      )}
 
       <div className="profile-posts">
         <h2 className="profile-posts-title">Posts</h2>

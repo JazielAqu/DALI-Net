@@ -80,9 +80,17 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('currentUser', JSON.stringify(user));
 
       try {
-        await membersAPI.getById(fbUser.uid);
-        setNeedsProfile(false);
-        localStorage.setItem('needsProfile', 'false');
+        const res = await membersAPI.getById(fbUser.uid);
+        const profile = res?.data?.data || {};
+        const requiredFields = ['major', 'home', 'favoriteThing1', 'favoriteThing2', 'favoriteThing3'];
+        const incomplete = requiredFields.some((f) => !profile[f]);
+        if (incomplete) {
+          setNeedsProfile(true);
+          localStorage.setItem('needsProfile', 'true');
+        } else {
+          setNeedsProfile(false);
+          localStorage.setItem('needsProfile', 'false');
+        }
       } catch (err) {
         if (err?.response?.status === 404) {
           setNeedsProfile(true);
@@ -215,8 +223,6 @@ export const AuthProvider = ({ children }) => {
       if (!authToken) return;
       try {
         await membersAPI.createSelf();
-        setNeedsProfile(false);
-        localStorage.setItem('needsProfile', 'false');
       } catch (err) {
         // ignore if fails; feed is still accessible
       }
