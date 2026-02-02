@@ -9,6 +9,11 @@ const api = axios.create({
   },
 });
 
+// Auth API
+export const authAPI = {
+  guestLogin: () => api.post('/auth/guest-login'),
+};
+
 // Members API
 export const membersAPI = {
   getAll: (params) => api.get('/members', { params }),

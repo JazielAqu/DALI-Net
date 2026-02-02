@@ -8,14 +8,14 @@ import { getSafeImageUrl } from '../../utils/imageUtils';
 import './Navigation.css';
 
 const Navigation = () => {
-  const { currentUser, setUser } = useAuth();
+  const { currentUser, logout, personaProfile } = useAuth();
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
   const [badgeCleared, setBadgeCleared] = useState(false);
   const defaultAvatar = '/default-avatar.jpg';
   const [failedSrcs, setFailedSrcs] = useState({});
   const avatarSrc = getSafeImageUrl(
-    [currentUser?.profileImage, currentUser?.image],
+    [personaProfile?.image, currentUser?.profileImage, currentUser?.image],
     failedSrcs,
     defaultAvatar
   );
@@ -31,7 +31,7 @@ const Navigation = () => {
   const unreadCount = notificationsData?.data?.unreadCount || 0;
   const displayUnread = badgeCleared ? 0 : unreadCount;
   const handleLogout = () => {
-    setUser(null);
+    logout();
     setShowNotifications(false);
     navigate('/');
   };
@@ -56,11 +56,13 @@ const Navigation = () => {
 
         <div className="nav-links">
           <Link to="/" className="nav-link">Home</Link>
-          {currentUser && (
+          {currentUser ? (
             <>
               <Link to="/feed" className="nav-link">Lab Feed</Link>
               <Link to="/following" className="nav-link">Following</Link>
-              <Link to={`/profile/${currentUser.id}`} className="nav-link">Profile</Link>
+              {currentUser.role !== 'guest' && (
+                <Link to={`/profile/${currentUser.id}`} className="nav-link">Profile</Link>
+              )}
               <button
                 className="nav-link nav-notifications"
                 onClick={() => {
@@ -74,6 +76,8 @@ const Navigation = () => {
                 )}
               </button>
             </>
+          ) : (
+            <Link to="/login" className="nav-link">Login</Link>
           )}
         </div>
 
@@ -81,11 +85,11 @@ const Navigation = () => {
           <div className="nav-user">
             <img
               src={avatarSrc}
-              alt={currentUser.name}
+              alt={personaProfile?.name || currentUser.name}
               className="nav-avatar"
               onError={handleAvatarError}
             />
-            <span className="nav-username">{currentUser.name}</span>
+            <span className="nav-username">{personaProfile?.name || currentUser.name}</span>
             <button className="nav-link nav-logout" onClick={handleLogout}>
               Log out
             </button>

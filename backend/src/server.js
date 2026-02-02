@@ -8,6 +8,7 @@ import followingRoutes from './routes/following.js';
 import likesRoutes from './routes/likes.js';
 import commentsRoutes from './routes/comments.js';
 import notificationsRoutes from './routes/notifications.js';
+import authRoutes from './routes/auth.js';
 
 dotenv.config();
 
@@ -44,6 +45,7 @@ app.use('/api/following', followingRoutes);
 app.use('/api/likes', likesRoutes);
 app.use('/api/comments', commentsRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/auth', authRoutes);
 
 // Error handling
 app.use(notFound);
