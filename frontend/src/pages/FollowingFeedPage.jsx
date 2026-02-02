@@ -11,7 +11,18 @@ const FollowingFeedPage = () => {
     return (
       <div className="feed-page">
         <div className="card">
-          <p>Please select a user from the home page to view your following feed.</p>
+          <p>Please sign in to view your following feed.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (currentUser.role === 'guest') {
+    return (
+      <div className="feed-page">
+        <div className="card">
+          <h1 className="page-title">Following</h1>
+          <p>Guests can’t follow yet. Sign in with Google or email to follow members and see their posts here.</p>
         </div>
       </div>
     );
