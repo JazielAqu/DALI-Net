@@ -1,5 +1,6 @@
 import express from 'express';
 import db from '../services/firebase.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -211,8 +212,29 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+// POST /api/members/self - Create minimal profile for authenticated user
+router.post('/self', requireAuth, async (req, res, next) => {
+  try {
+    const uid = req.user.uid;
+    const existing = await db.collection('members').doc(uid).get();
+    if (existing.exists) {
+      return res.status(200).json({ success: true, data: { id: uid, ...existing.data() } });
+    }
+    const member = {
+      name: req.user.name || 'New Member',
+      email: req.user.email || '',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    await db.collection('members').doc(uid).set(member);
+    res.status(201).json({ success: true, data: { id: uid, ...member } });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // PATCH /api/members/:id - Update member (e.g., profile image)
-router.patch('/:id', async (req, res, next) => {
+router.patch('/:id', requireAuth, async (req, res, next) => {
   try {
     const { id } = req.params;
     const updates = {};

@@ -9,6 +9,15 @@ const api = axios.create({
   },
 });
 
+// Attach auth token if present
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // Auth API
 export const authAPI = {
   guestLogin: () => api.post('/auth/guest-login'),
@@ -23,6 +32,7 @@ export const membersAPI = {
   getFollowing: (id) => api.get(`/members/${id}/following`),
   create: (data) => api.post('/members', data),
   update: (id, data) => api.patch(`/members/${id}`, data),
+  createSelf: () => api.post('/members/self'),
 };
 
 // Posts API

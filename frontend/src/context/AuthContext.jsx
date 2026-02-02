@@ -208,6 +208,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Ensure member doc exists after email/Google signup
+  useEffect(() => {
+    const ensureProfile = async () => {
+      if (!currentUser || currentUser.role === 'guest') return;
+      if (!authToken) return;
+      try {
+        await membersAPI.createSelf();
+        setNeedsProfile(false);
+        localStorage.setItem('needsProfile', 'false');
+      } catch (err) {
+        // ignore if fails; feed is still accessible
+      }
+    };
+    ensureProfile();
+  }, [currentUser]);
+
   return (
     <AuthContext.Provider
       value={{
