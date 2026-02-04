@@ -6,6 +6,8 @@ import {
   logoutFirebase,
   signUpEmail,
   signInEmail,
+  linkPassword,
+  changePassword,
 } from '../services/firebaseClient';
 import { authAPI, membersAPI } from '../services/api';
 
@@ -65,6 +67,8 @@ export const AuthProvider = ({ children }) => {
 
       const token = await fbUser.getIdToken();
       const role = fbUser.isAnonymous ? 'guest' : 'user';
+      const providerIds = (fbUser.providerData || []).map((p) => p.providerId);
+      const hasPassword = providerIds.includes('password');
       const user = {
         id: fbUser.uid,
         uid: fbUser.uid,
@@ -73,6 +77,8 @@ export const AuthProvider = ({ children }) => {
         email: fbUser.email || null,
         profileImage: fbUser.photoURL || '',
         image: fbUser.photoURL || '',
+        providers: providerIds,
+        hasPassword,
       };
       setUser(user);
       setAuthToken(token);
@@ -247,6 +253,8 @@ export const AuthProvider = ({ children }) => {
         signUpWithEmail,
         signInWithEmail,
         continueAsGuest,
+        linkPassword,
+        changePassword,
       }}
     >
       {children}

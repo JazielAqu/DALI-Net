@@ -14,8 +14,11 @@ const Navigation = () => {
   const [badgeCleared, setBadgeCleared] = useState(false);
   const defaultAvatar = `${import.meta.env.BASE_URL || '/'}default-avatar.jpg`;
   const [failedSrcs, setFailedSrcs] = useState({});
+  useEffect(() => {
+    setFailedSrcs({});
+  }, [currentUser?.profileImage, currentUser?.image, currentUser?.picture, personaProfile?.image]);
   const avatarSrc = getSafeImageUrl(
-    [personaProfile?.image, currentUser?.profileImage, currentUser?.image, currentUser?.picture],
+    [currentUser?.profileImage, currentUser?.image, currentUser?.picture, personaProfile?.image],
     failedSrcs,
     defaultAvatar
   );
@@ -66,13 +69,13 @@ const Navigation = () => {
                 {currentUser.role !== 'guest' && (
                   <Link to={`/profile/${currentUser.id}`} className="nav-link">Profile</Link>
                 )}
-                <button
-                  className="nav-link nav-notifications"
-                  onClick={() => {
-                    setShowNotifications(true);
-                    setBadgeCleared(true);
-                  }}
-                >
+              <button
+                className="nav-link nav-notifications"
+                onClick={() => {
+                  setShowNotifications(true);
+                  setBadgeCleared(true);
+                }}
+              >
                   🔔
                   {displayUnread > 0 && (
                     <span className="notification-badge">{displayUnread}</span>
@@ -89,11 +92,11 @@ const Navigation = () => {
           <div className="nav-user">
             <img
               src={avatarSrc}
-              alt={personaProfile?.name || currentUser.name}
+              alt={currentUser.name}
               className="nav-avatar"
               onError={handleAvatarError}
             />
-            <span className="nav-username">{personaProfile?.name || currentUser.name}</span>
+            <span className="nav-username">{currentUser.name}</span>
             <button className="nav-link nav-logout" onClick={handleLogout}>
               Log out
             </button>

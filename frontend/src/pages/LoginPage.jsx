@@ -9,6 +9,7 @@ const LoginPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
   const navigate = useNavigate();
@@ -76,7 +77,26 @@ const LoginPage = () => {
           </label>
           <label>
             Password
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <div className="input-with-icon">
+              <input
+                type={showPw ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() => setShowPw((prev) => !prev)}
+                aria-label={showPw ? 'Hide password' : 'Show password'}
+              >
+                <img
+                  src={`${import.meta.env.BASE_URL || '/'}${showPw ? 'eye.svg' : 'eye-off.svg'}`}
+                  alt=""
+                  className="eye-icon"
+                />
+              </button>
+            </div>
           </label>
           {error && <div className="error-message">{error}</div>}
           <button className="btn btn-primary" type="submit" disabled={pending}>

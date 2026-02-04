@@ -35,6 +35,23 @@
   border-radius: 0.5rem;
 }
 
+.input-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.input-with-icon input {
+  flex: 1;
+}
+
+.eye-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  opacity: 0.8;
+}
+
 .toggle-mode {
   margin-top: 0.75rem;
   text-align: center;

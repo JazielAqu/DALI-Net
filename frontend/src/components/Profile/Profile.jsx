@@ -9,7 +9,7 @@ import { getSafeImageUrl } from '../../utils/imageUtils';
 import './Profile.css';
 
 const Profile = ({ memberId }) => {
-  const { currentUser, setUser, logout } = useAuth();
+  const { currentUser, setUser, logout, linkPassword } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [newImageUrl, setNewImageUrl] = useState('');
@@ -19,6 +19,17 @@ const Profile = ({ memberId }) => {
   const [showImageForm, setShowImageForm] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [showDelete, setShowDelete] = useState(false);
+  const [pw, setPw] = useState('');
+  const [pw2, setPw2] = useState('');
+  const [pwMsg, setPwMsg] = useState('');
+  const [pwErr, setPwErr] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [newPw2, setNewPw2] = useState('');
+  const [newPwMsg, setNewPwMsg] = useState('');
+  const [newPwErr, setNewPwErr] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+  const [showChangePw, setShowChangePw] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Respect Vite base path in dev/prod
   const defaultAvatar = `${import.meta.env.BASE_URL || '/'}default-avatar.jpg`;
@@ -151,6 +162,15 @@ const Profile = ({ memberId }) => {
 
   const isOwnProfile = currentUser && currentUser.id === memberId;
   const deletable = member.locked === true;
+  const canLinkPassword =
+    isOwnProfile &&
+    currentUser?.email &&
+    !currentUser?.hasPassword &&
+    currentUser?.role !== 'guest';
+  const canChangePassword =
+    isOwnProfile &&
+    currentUser?.hasPassword &&
+    currentUser?.role !== 'guest';
 
   const handleAvatarError = (e) => {
     e.target.onerror = null;
@@ -207,6 +227,16 @@ const Profile = ({ memberId }) => {
     reader.readAsDataURL(file);
   };
 
+  const handleRemovePhoto = () => {
+    const resetAvatar = defaultAvatar;
+    updateImageMutation.mutate({
+      profileImage: resetAvatar,
+      image: resetAvatar,
+      picture: resetAvatar,
+    });
+    setFailedSrcs({});
+  };
+
   return (
     <div className="profile-container">
       <div className="profile-header card">
@@ -229,13 +259,25 @@ const Profile = ({ memberId }) => {
               />
             )}
             {isOwnProfile && (
-              <button
-                className="btn btn-secondary"
-                onClick={() => navigate('/profile/edit')}
-                style={{ marginLeft: 'auto' }}
-              >
-                Edit profile
-              </button>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => navigate('/profile/edit')}
+                >
+                  Edit profile
+                </button>
+                <button
+                  className="btn btn-secondary settings-toggle"
+                  onClick={() => setShowSettings(true)}
+                  aria-label="Open settings"
+                >
+                  <img
+                    src={`${import.meta.env.BASE_URL || '/'}settings.svg`}
+                    alt=""
+                    className="settings-icon"
+                  />
+                </button>
+              </div>
             )}
           </div>
 
@@ -299,16 +341,22 @@ const Profile = ({ memberId }) => {
                 <form className="profile-image-form" onSubmit={handleImageSubmit}>
                   <label className="file-input-label">
                     <span>Select image (optional)</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="file-input"
-                    />
+                    <div className="file-input-row">
+                      <input
+                        id="profile-file"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="file-input-hidden"
+                      />
+                      <label htmlFor="profile-file" className="btn btn-secondary file-trigger">
+                        Choose file
+                      </label>
+                      {newImageFileName && (
+                        <span className="selected-file subtle">{newImageFileName}</span>
+                      )}
+                    </div>
                   </label>
-                  {newImageFileName && (
-                    <div className="selected-file">Selected: {newImageFileName}</div>
-                  )}
                   <input
                     type="url"
                     className="input"
@@ -342,6 +390,15 @@ const Profile = ({ memberId }) => {
                     >
                       Cancel
                     </button>
+                    <button
+                      type="button"
+                      className="btn btn-danger"
+                      style={{ backgroundColor: '#b00020', borderColor: '#b00020', color: '#fff' }}
+                      onClick={handleRemovePhoto}
+                      disabled={updateImageMutation.isPending}
+                    >
+                      Remove photo
+                    </button>
                   </div>
                 </form>
               )}
@@ -357,13 +414,155 @@ const Profile = ({ memberId }) => {
         </div>
       </div>
 
-          {isOwnProfile && deletable && (
-            <div className="card danger-card" style={{ marginTop: '1rem' }}>
-              <h3 style={{ color: '#b00020' }}>Delete my account (danger)</h3>
-              <p className="muted" style={{ marginBottom: '1rem' }}>
-                This permanently removes your profile, posts, likes, and follows. You’ll need to create a new account to use the app again.
-              </p>
-              {deleteError && <div className="error-message">{deleteError}</div>}
+      {isOwnProfile && showSettings && (
+        <div className="modal-backdrop">
+          <div className="modal-card">
+            <div className="modal-header">
+              <h3>Settings</h3>
+              <button className="icon-btn" onClick={() => setShowSettings(false)}>✕</button>
+            </div>
+            <div className="settings-modal-body">
+              {canLinkPassword && (
+                <button className="btn btn-primary" onClick={() => { setShowChangePw(true); setShowSettings(false); }}>
+                  Add password
+                </button>
+              )}
+              {canChangePassword && (
+                <button className="btn btn-primary" onClick={() => { setShowChangePw(true); setShowSettings(false); }}>
+                  Change password
+                </button>
+              )}
+              {deletable && (
+                <button className="btn btn-danger" onClick={() => { setShowDeleteModal(true); setShowSettings(false); }}>
+                  Delete my account
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change/Add Password Modal */}
+      {showChangePw && (
+        <div className="modal-backdrop">
+          <div className="modal-card">
+            <div className="modal-header">
+              <h3>{canChangePassword ? 'Change password' : 'Add password'}</h3>
+              <button className="icon-btn" onClick={() => setShowChangePw(false)}>✕</button>
+            </div>
+            <p className="muted" style={{ marginBottom: '0.5rem' }}>
+              {canChangePassword
+                ? 'Update the password for your account.'
+                : 'Set a password so you can also sign in with email.'}
+            </p>
+            {canLinkPassword && (
+              <label className="muted" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                Email
+                <input
+                  className="input"
+                  type="email"
+                  value={currentUser.email}
+                  disabled
+                  style={{ marginTop: '0.25rem' }}
+                />
+              </label>
+            )}
+            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+              New password
+              <input
+                className="input"
+                type="password"
+                value={canChangePassword ? newPw : pw}
+                onChange={(e) => (canChangePassword ? setNewPw(e.target.value) : setPw(e.target.value))}
+                style={{ marginTop: '0.25rem' }}
+              />
+            </label>
+            <label style={{ display: 'block', marginBottom: '0.75rem' }}>
+              Confirm password
+              <input
+                className="input"
+                type="password"
+                value={canChangePassword ? newPw2 : pw2}
+                onChange={(e) => (canChangePassword ? setNewPw2(e.target.value) : setPw2(e.target.value))}
+                style={{ marginTop: '0.25rem' }}
+              />
+            </label>
+            {(pwErr || newPwErr) && (
+              <div className="error-message">{pwErr || newPwErr}</div>
+            )}
+            {(pwMsg || newPwMsg) && (
+              <div className="success-message">{pwMsg || newPwMsg}</div>
+            )}
+            <div className="modal-actions">
+              <button
+                className="btn btn-secondary"
+                onClick={() => {
+                  setShowChangePw(false);
+                  setShowSettings(true);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={async () => {
+                  canChangePassword ? (setNewPwErr(''), setNewPwMsg('')) : (setPwErr(''), setPwMsg(''));
+                  const valPw = canChangePassword ? newPw : pw;
+                  const valPw2 = canChangePassword ? newPw2 : pw2;
+                  if (!valPw || valPw.length < 6) {
+                    (canChangePassword ? setNewPwErr : setPwErr)('Password must be at least 6 characters');
+                    return;
+                  }
+                  if (valPw !== valPw2) {
+                    (canChangePassword ? setNewPwErr : setPwErr)('Passwords do not match');
+                    return;
+                  }
+                  try {
+                    if (canChangePassword) {
+                      await changePassword(valPw);
+                      setNewPwMsg('Password updated.');
+                      setNewPw('');
+                      setNewPw2('');
+                      setTimeout(() => setNewPwMsg(''), 1500);
+                    } else {
+                      await linkPassword(currentUser.email, valPw);
+                      setPwMsg('Password added. You can now sign in with email + password.');
+                      setPw('');
+                      setPw2('');
+                      setTimeout(() => setPwMsg(''), 1500);
+                      queryClient.invalidateQueries({ queryKey: ['member', memberId] });
+                    }
+                    setShowChangePw(false);
+                  } catch (err) {
+                    const msg =
+                      err?.message === 'Firebase: Error (auth/requires-recent-login).'
+                        ? 'Please log out and sign in again, then retry.'
+                        : err?.message || 'Could not update password. Try again.';
+                    (canChangePassword ? setNewPwErr : setPwErr)(msg);
+                  }
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {deletable && showDeleteModal && (
+        <div className="modal-backdrop">
+          <div className="modal-card danger">
+            <div className="modal-header">
+              <h3 style={{ color: '#b00020' }}>Delete my account</h3>
+              <button className="icon-btn" onClick={() => setShowDeleteModal(false)}>✕</button>
+            </div>
+            <p className="muted" style={{ marginBottom: '1rem' }}>
+              This permanently removes your profile, posts, likes, and follows. You’ll need to create a new account to use the app again.
+            </p>
+            {deleteError && <div className="error-message">{deleteError}</div>}
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancel</button>
               <button
                 className="btn btn-danger"
                 style={{
@@ -371,7 +570,6 @@ const Profile = ({ memberId }) => {
                   borderColor: '#b00020',
                   color: '#fff',
                   fontWeight: 600,
-                  transition: 'transform 0.1s ease',
                 }}
                 disabled={deleteAccountMutation.isPending}
                 onClick={() => {
@@ -382,7 +580,9 @@ const Profile = ({ memberId }) => {
                 {deleteAccountMutation.isPending ? 'Deleting...' : 'Delete my account'}
               </button>
             </div>
-          )}
+          </div>
+        </div>
+      )}
 
       <div className="profile-posts">
         <h2 className="profile-posts-title">Posts</h2>

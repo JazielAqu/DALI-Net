@@ -9,6 +9,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
+  EmailAuthProvider,
+  linkWithCredential,
+  updatePassword,
 } from 'firebase/auth';
 
 const firebaseConfig = {
@@ -42,3 +45,18 @@ export const signUpEmail = async (name, email, password) => {
   return cred.user;
 };
 export const signInEmail = (email, password) => signInWithEmailAndPassword(auth, email, password);
+
+// Link a password to the currently signed-in user (e.g., after Google login)
+export const linkPassword = async (email, password) => {
+  if (!auth.currentUser) throw new Error('No authenticated user to link');
+  const credential = EmailAuthProvider.credential(email, password);
+  const result = await linkWithCredential(auth.currentUser, credential);
+  return result.user;
+};
+
+// Change password for a user who already has email/password linked
+export const changePassword = async (newPassword) => {
+  if (!auth.currentUser) throw new Error('No authenticated user');
+  await updatePassword(auth.currentUser, newPassword);
+  return auth.currentUser;
+};
