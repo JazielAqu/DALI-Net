@@ -68,6 +68,7 @@ const ProfileFormPage = () => {
         picture: form.profileImage || prev?.picture,
       }));
       setNeedsProfile(false);
+      localStorage.setItem('needsProfile', 'false');
       navigate(`/profile/${currentUser.id}`);
     },
     onError: (err) => {
@@ -113,7 +114,7 @@ const ProfileFormPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
-    updateMutation.mutate(form);
+    updateMutation.mutate({ ...form, completedProfile: true });
   };
 
   const mode = needsProfile ? 'Create your DALI profile' : 'Update your profile';

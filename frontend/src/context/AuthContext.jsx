@@ -84,13 +84,9 @@ export const AuthProvider = ({ children }) => {
         const profile = res?.data?.data || {};
         const requiredFields = ['major', 'home', 'favoriteThing1', 'favoriteThing2', 'favoriteThing3'];
         const incomplete = requiredFields.some((f) => !profile[f]);
-        if (incomplete) {
-          setNeedsProfile(true);
-          localStorage.setItem('needsProfile', 'true');
-        } else {
-          setNeedsProfile(false);
-          localStorage.setItem('needsProfile', 'false');
-        }
+        const needs = profile.completedProfile ? false : incomplete;
+        setNeedsProfile(needs);
+        localStorage.setItem('needsProfile', needs ? 'true' : 'false');
       } catch (err) {
         if (err?.response?.status === 404) {
           setNeedsProfile(true);

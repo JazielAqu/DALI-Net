@@ -54,8 +54,12 @@ export const ensureSelf = (req, res, next) => {
 export const demoLogin = async (memberId) => {
   const doc = await db.collection('members').doc(memberId).get();
   if (!doc.exists) return null;
+  const data = doc.data() || {};
+  if (data.locked) {
+    return { error: 'This profile requires real sign-in' };
+  }
   const token = jwt.sign({ id: memberId }, DEMO_SECRET, { expiresIn: '2h' });
-  return { token, user: { id: memberId, ...doc.data() } };
+  return { token, user: { id: memberId, ...data } };
 };
 
 export const guestLogin = (req, res) => {

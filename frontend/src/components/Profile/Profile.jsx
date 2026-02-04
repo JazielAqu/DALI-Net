@@ -18,6 +18,7 @@ const Profile = ({ memberId }) => {
   const [imageError, setImageError] = useState('');
   const [showImageForm, setShowImageForm] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [showDelete, setShowDelete] = useState(false);
 
   // Respect Vite base path in dev/prod
   const defaultAvatar = `${import.meta.env.BASE_URL || '/'}default-avatar.jpg`;
@@ -149,6 +150,7 @@ const Profile = ({ memberId }) => {
   const following = followingData?.data?.data || [];
 
   const isOwnProfile = currentUser && currentUser.id === memberId;
+  const deletable = member.locked === true;
 
   const handleAvatarError = (e) => {
     e.target.onerror = null;
@@ -225,6 +227,15 @@ const Profile = ({ memberId }) => {
                 followerId={currentUser.id}
                 followingId={memberId}
               />
+            )}
+            {isOwnProfile && (
+              <button
+                className="btn btn-secondary"
+                onClick={() => navigate('/profile/edit')}
+                style={{ marginLeft: 'auto' }}
+              >
+                Edit profile
+              </button>
             )}
           </div>
 
@@ -346,25 +357,32 @@ const Profile = ({ memberId }) => {
         </div>
       </div>
 
-      {isOwnProfile && (
-        <div className="card danger-card" style={{ marginTop: '1rem' }}>
-          <h3>Delete account</h3>
-          <p className="muted">
-            This removes your profile, posts, likes, and follows. You’ll need to create a new account to use the app again.
-          </p>
-          {deleteError && <div className="error-message">{deleteError}</div>}
-          <button
-            className="btn btn-danger"
-            disabled={deleteAccountMutation.isPending}
-            onClick={() => {
-              const confirmDelete = window.confirm('Delete your account? This cannot be undone.');
-              if (confirmDelete) deleteAccountMutation.mutate();
-            }}
-          >
-            {deleteAccountMutation.isPending ? 'Deleting...' : 'Delete my account'}
-          </button>
-        </div>
-      )}
+          {isOwnProfile && deletable && (
+            <div className="card danger-card" style={{ marginTop: '1rem' }}>
+              <h3 style={{ color: '#b00020' }}>Delete my account (danger)</h3>
+              <p className="muted" style={{ marginBottom: '1rem' }}>
+                This permanently removes your profile, posts, likes, and follows. You’ll need to create a new account to use the app again.
+              </p>
+              {deleteError && <div className="error-message">{deleteError}</div>}
+              <button
+                className="btn btn-danger"
+                style={{
+                  backgroundColor: '#b00020',
+                  borderColor: '#b00020',
+                  color: '#fff',
+                  fontWeight: 600,
+                  transition: 'transform 0.1s ease',
+                }}
+                disabled={deleteAccountMutation.isPending}
+                onClick={() => {
+                  const confirmDelete = window.confirm('Delete your account? This cannot be undone.');
+                  if (confirmDelete) deleteAccountMutation.mutate();
+                }}
+              >
+                {deleteAccountMutation.isPending ? 'Deleting...' : 'Delete my account'}
+              </button>
+            </div>
+          )}
 
       <div className="profile-posts">
         <h2 className="profile-posts-title">Posts</h2>

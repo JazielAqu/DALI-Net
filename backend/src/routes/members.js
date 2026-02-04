@@ -210,6 +210,8 @@ router.post('/self', requireAuth, async (req, res, next) => {
       profileImage: avatar,
       image: avatar,
       picture: avatar,
+      locked: true, // newly created accounts require real auth
+      completedProfile: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -225,8 +227,18 @@ router.delete('/self', requireAuth, async (req, res, next) => {
   try {
     const uid = req.user.uid;
 
+    const doc = await db.collection('members').doc(uid).get();
+    if (!doc.exists) {
+      return res.status(404).json({ success: false, error: { message: 'Member not found' } });
+    }
+    const data = doc.data() || {};
+    // Only allow deletion of locked (user-created) accounts; seeded/demo profiles remain undeletable
+    if (data.locked !== true) {
+      return res.status(403).json({ success: false, error: { message: 'This profile cannot be deleted' } });
+    }
+
     // Delete member document if it exists
-    await db.collection('members').doc(uid).delete();
+    await doc.ref.delete();
 
     // Best-effort cleanup of edges (follow, likes, posts, comments)
     const cleanCollection = async (collection, field) => {
@@ -307,6 +319,7 @@ router.patch('/:id', requireAuth, async (req, res, next) => {
       'pm',
       'core',
       'mentor',
+      'completedProfile',
       'profileImage',
       'image',
       'picture',

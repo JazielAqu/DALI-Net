@@ -17,6 +17,9 @@ router.post('/demo-login', async (req, res, next) => {
     if (!result) {
       return res.status(404).json({ success: false, error: { message: 'Member not found' } });
     }
+    if (result.error) {
+      return res.status(403).json({ success: false, error: { message: result.error } });
+    }
     res.json({ success: true, data: result });
   } catch (error) {
     next(error);

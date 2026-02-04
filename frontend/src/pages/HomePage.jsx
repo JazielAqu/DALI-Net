@@ -45,13 +45,16 @@ const HomePage = () => {
     );
 
   const handleSelectUser = (member) => {
-    if (!currentUser) {
+    // Legacy demo personas: allow quick persona selection only for unlocked (seeded) members
+    const isLocked = member.locked === true;
+    if (!currentUser && !isLocked) {
       const safeImage = getSafeImageUrl(
         [member.profileImage, member.picture, member.image],
         {},
         '/default-avatar.jpg'
       );
-      // Persist as the active user when not signed in yet
+      // Set as active persona for demo convenience on unlocked profiles
+      // (newly created accounts are locked and skip this)
       setUser({
         ...member,
         profileImage: safeImage,
