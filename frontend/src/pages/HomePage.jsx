@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
-import { membersAPI } from '../services/api';
+import { membersAPI, authAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import FollowButton from '../components/FollowButton/FollowButton';
 import './HomePage.css';
@@ -47,23 +47,44 @@ const HomePage = () => {
   const handleSelectUser = (member) => {
     // Legacy demo personas: allow quick persona selection only for unlocked (seeded) members
     const isLocked = member.locked === true;
+    const safeImage = getSafeImageUrl(
+      [member.profileImage, member.picture, member.image],
+      {},
+      '/default-avatar.jpg'
+    );
+
+    const activateDemoUser = async () => {
+      try {
+        const res = await authAPI.demoLogin(member.id);
+        const token = res?.data?.data?.token;
+        const user = res?.data?.data?.user || member;
+        if (token) {
+          localStorage.setItem('authToken', token);
+        }
+        setUser({
+          ...user,
+          profileImage: safeImage,
+          image: safeImage,
+          picture: safeImage,
+        });
+      } catch (err) {
+        console.warn('Demo login failed, falling back to local persona only', err);
+        setUser({
+          ...member,
+          profileImage: safeImage,
+          image: safeImage,
+          picture: safeImage,
+        });
+      } finally {
+        navigate(`/profile/${member.id}`);
+      }
+    };
+
     if (!currentUser && !isLocked) {
-      const safeImage = getSafeImageUrl(
-        [member.profileImage, member.picture, member.image],
-        {},
-        '/default-avatar.jpg'
-      );
-      // Set as active persona for demo convenience on unlocked profiles
-      // (newly created accounts are locked and skip this)
-      setUser({
-        ...member,
-        profileImage: safeImage,
-        image: safeImage,
-        picture: safeImage,
-      });
+      activateDemoUser();
+    } else {
+      navigate(`/profile/${member.id}`);
     }
-    // Always navigate to the selected member's profile
-    navigate(`/profile/${member.id}`);
   };
 
   const getBadges = (member) => {

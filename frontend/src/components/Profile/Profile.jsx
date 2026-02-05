@@ -31,6 +31,7 @@ const Profile = ({ memberId }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [showChangePw, setShowChangePw] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showFullProfile, setShowFullProfile] = useState(false);
 
   // Respect Vite base path in dev/prod
   const defaultAvatar = `${import.meta.env.BASE_URL || '/'}default-avatar.jpg`;
@@ -237,6 +238,94 @@ const Profile = ({ memberId }) => {
     setFailedSrcs({});
   };
 
+  // Normalize optional profile fields (support legacy seeded keys with spaces)
+  const favorite1 = member.favoriteThing1 || member['favorite thing 1'] || '';
+  const favorite2 = member.favoriteThing2 || member['favorite thing 2'] || '';
+  const favorite3 = member.favoriteThing3 || member['favorite thing 3'] || '';
+  const favoriteTradition = member.favoriteDartmouthTradition || member['favorite dartmouth tradition'] || '';
+  const funFact = member.funFact || member['fun fact'] || '';
+  const quote = member.quote || member['quote'] || '';
+  const major = member.major || member['major'] || '';
+  const minor = member.minor || member['minor'] || '';
+  const home = member.home || member['home'] || '';
+  const birthday = member.birthday || member['birthday'] || '';
+  const year = member.year || member['year'] || '';
+  const hasDetails = major || minor || home || birthday || year;
+  const hasFavorites = favorite1 || favorite2 || favorite3;
+  const hasExtras = favoriteTradition || funFact || quote;
+  const hasFullProfile = hasDetails || hasFavorites || hasExtras;
+
+  const renderFullProfile = () => (
+    <div className="full-profile-body">
+      {hasDetails && (
+        <div className="profile-facts">
+          <h3>Details</h3>
+          <div className="profile-facts-grid">
+            {year && (
+              <div className="fact">
+                <span className="fact-label">Year</span>
+                <span className="fact-value">{year}</span>
+              </div>
+            )}
+            {major && (
+              <div className="fact">
+                <span className="fact-label">Major</span>
+                <span className="fact-value">{major}</span>
+              </div>
+            )}
+            {minor && (
+              <div className="fact">
+                <span className="fact-label">Minor</span>
+                <span className="fact-value">{minor}</span>
+              </div>
+            )}
+            {home && (
+              <div className="fact">
+                <span className="fact-label">Home</span>
+                <span className="fact-value">{home}</span>
+              </div>
+            )}
+            {birthday && (
+              <div className="fact">
+                <span className="fact-label">Birthday</span>
+                <span className="fact-value">{birthday}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {hasFavorites && (
+        <div className="profile-favorites">
+          <h3>Favorites</h3>
+          <ul className="favorites-list">
+            {favorite1 && <li>{favorite1}</li>}
+            {favorite2 && <li>{favorite2}</li>}
+            {favorite3 && <li>{favorite3}</li>}
+          </ul>
+        </div>
+      )}
+
+      {hasExtras && (
+        <div className="profile-extras">
+          {favoriteTradition && (
+            <div className="extra-row">
+              <span className="fact-label">Dartmouth tradition</span>
+              <span className="fact-value">{favoriteTradition}</span>
+            </div>
+          )}
+          {funFact && (
+            <div className="extra-row">
+              <span className="fact-label">Fun fact</span>
+              <span className="fact-value">{funFact}</span>
+            </div>
+          )}
+          {quote && <blockquote className="profile-quote">{quote}</blockquote>}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="profile-container">
       <div className="profile-header card">
@@ -338,32 +427,29 @@ const Profile = ({ memberId }) => {
                 </button>
               </div>
               {showImageForm && (
-                <form className="profile-image-form" onSubmit={handleImageSubmit}>
-                  <label className="file-input-label">
-                    <span>Select image (optional)</span>
-                    <div className="file-input-row">
-                      <input
-                        id="profile-file"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="file-input-hidden"
-                      />
-                      <label htmlFor="profile-file" className="btn btn-secondary file-trigger">
-                        Choose file
-                      </label>
-                      {newImageFileName && (
-                        <span className="selected-file subtle">{newImageFileName}</span>
-                      )}
-                    </div>
-                  </label>
+                <form className="profile-image-form" onSubmit={handleImageSubmit} style={{ marginTop: '0.5rem' }}>
+                  <div className="file-input-row">
+                    <input
+                      id="profile-file"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="file-input-hidden"
+                    />
+                    <label htmlFor="profile-file" className="file-trigger">
+                      Choose image
+                    </label>
+                    {newImageFileName && (
+                      <span className="selected-file subtle">{newImageFileName}</span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     className="input"
                     placeholder="Image URL (optional)"
                     value={newImageUrl}
                     onChange={(e) => setNewImageUrl(e.target.value)}
-                    style={{ margin: '0.75rem 0' }}
+                    style={{ margin: '0.3rem 0' }}
                   />
                   {imageError && <div className="error-message">{imageError}</div>}
                   {updateImageMutation.isSuccess && !imageError && (
@@ -411,8 +497,31 @@ const Profile = ({ memberId }) => {
               {member.year && <span>{member.year}</span>}
             </div>
           )}
+
+          {hasFullProfile && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ alignSelf: 'flex-start', marginTop: '0.35rem' }}
+              onClick={() => setShowFullProfile(true)}
+            >
+              View full profile
+            </button>
+          )}
         </div>
       </div>
+
+      {showFullProfile && (
+        <div className="modal-backdrop" onClick={() => setShowFullProfile(false)}>
+          <div className="modal-card full-profile-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Full profile</h3>
+              <button className="icon-btn" onClick={() => setShowFullProfile(false)}>✕</button>
+            </div>
+            {renderFullProfile()}
+          </div>
+        </div>
+      )}
 
       {isOwnProfile && showSettings && (
         <div className="modal-backdrop">
@@ -433,7 +542,7 @@ const Profile = ({ memberId }) => {
                 </button>
               )}
               {deletable && (
-                <button className="btn btn-danger" onClick={() => { setShowDeleteModal(true); setShowSettings(false); }}>
+                <button className="btn btn-danger danger-outline" onClick={() => { setShowDeleteModal(true); setShowSettings(false); }}>
                   Delete my account
                 </button>
               )}

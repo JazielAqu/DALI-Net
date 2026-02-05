@@ -77,6 +77,8 @@ Download the `dali_social_media.json` file from the provided URL and place it in
 npm run seed
 ```
 
+> Note: The seed script also uses AI-generated sample posts to quickly populate the feed for testing.
+
 ### 4. Start Backend Server
 
 ```bash
@@ -108,10 +110,13 @@ npm run dev
 
 The frontend will run on `http://localhost:5173`
 
-## 📱 Usage
+## Usage
 
 1. Open `http://localhost:5173` in your browser
-2. On the home page, select a user from the member list
+2. Choose how you want to explore:
+   - **Demo (premade)**: On the home page, click any premade member from the list (seeded from `data/dali_social_media.json`). The app will log you in as that member so you can browse, like, comment, and post as a demo account.
+   - **Create your own**: Sign up or log in with email/Google, complete your profile, and use the app with your own account.
+   - **Guest**: Use “Continue as Guest” for a quick, no-signup look around (limited actions like liking are disabled for guests).
 3. Navigate to different sections:
    - **Feed**: View personalized feed of posts
    - **Profile**: View member profiles
@@ -295,14 +300,13 @@ I used ChatGPT during development to assist with:
 
 ### Specific Example
 
-**Prompt Used**: "How do I implement a personalized feed that shows posts from users I follow in Firebase Firestore?"
+**Problem**: While adding profile photo uploads, Firestore threw `The value of property "profileImage" is longer than 1048487 bytes` when I tried storing the whole image data in the member document.
 
-**AI Response**: The AI suggested using Firestore's `in` operator to query posts from multiple users at once.
+**AI Suggestion**: Use Firebase Storage or Google Cloud CLI to handle large files.
 
-**Adaptation Required**: 
-- The AI's initial suggestion didn't account for Firestore's 10-item limit on `in` queries
-- I had to implement batching logic to handle cases where a user follows more than 10 people
-- Added client-side sorting to merge results from multiple batches
-- Implemented a fallback to notify the user if they don't follow anybody
+**What I Actually Did**:
+- Researched how other apps (e.g., Instagram) avoid oversized Firestore fields
+- Kept uploads in the app/backend flow: convert the selected image to a data URL, send it to a backend `/uploads/profile-image` endpoint, and save only the returned URL in Firestore
+- This keeps Firestore documents tiny while still letting the frontend load the image from the stored URL to bypass the 1MB limit.
 
 **NOTE** I Always verify AI suggestions against documentation, especially regarding limitations and what my goal is in what I am trying to develop

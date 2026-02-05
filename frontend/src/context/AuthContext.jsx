@@ -93,6 +93,14 @@ export const AuthProvider = ({ children }) => {
         const needs = profile.completedProfile ? false : incomplete;
         setNeedsProfile(needs);
         localStorage.setItem('needsProfile', needs ? 'true' : 'false');
+
+        // Keep avatar consistent across nav, feed, and profile by preferring the profile record
+        const profileImg = profile.profileImage || profile.picture || profile.image;
+        if (profileImg) {
+          const mergedUser = { ...user, profileImage: profileImg, image: profileImg, picture: profileImg };
+          setUser(mergedUser);
+          localStorage.setItem('currentUser', JSON.stringify(mergedUser));
+        }
       } catch (err) {
         if (err?.response?.status === 404) {
           setNeedsProfile(true);

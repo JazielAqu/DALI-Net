@@ -12,6 +12,7 @@ const Navigation = () => {
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
   const [badgeCleared, setBadgeCleared] = useState(false);
+  const [lastClearedUnread, setLastClearedUnread] = useState(0);
   const defaultAvatar = `${import.meta.env.BASE_URL || '/'}default-avatar.jpg`;
   const [failedSrcs, setFailedSrcs] = useState({});
   useEffect(() => {
@@ -29,10 +30,54 @@ const Navigation = () => {
     enabled: !!currentUser?.id,
     refetchInterval: 30000, // Refetch every 30 seconds
     retry: false,
+    onSuccess: () => {
+      // Keep local badge state in sync if unread count decreased (e.g., read elsewhere)
+      if (badgeCleared) {
+        setLastClearedUnread((prev) => Math.min(prev, unreadCount));
+      }
+    },
   });
 
   const unreadCount = notificationsData?.data?.unreadCount || 0;
   const displayUnread = badgeCleared ? 0 : unreadCount;
+
+  // Persist badge state per user so it stays cleared after logout/login until new notifications arrive
+  useEffect(() => {
+    if (currentUser?.id) {
+      const stored = localStorage.getItem(`notifBadge:${currentUser.id}`);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          setBadgeCleared(parsed.badgeCleared || false);
+          setLastClearedUnread(parsed.lastClearedUnread || 0);
+        } catch {
+          setBadgeCleared(false);
+          setLastClearedUnread(0);
+        }
+      } else {
+        setBadgeCleared(false);
+        setLastClearedUnread(0);
+      }
+    } else {
+      setBadgeCleared(false);
+      setLastClearedUnread(0);
+    }
+  }, [currentUser?.id]);
+
+  // Show badge again if unread count grows beyond what was cleared
+  useEffect(() => {
+    if (!badgeCleared) return;
+    if (unreadCount > lastClearedUnread) {
+      setBadgeCleared(false);
+    }
+  }, [unreadCount, badgeCleared, lastClearedUnread]);
+
+  const persistBadgeState = (cleared, clearedCount) => {
+    if (!currentUser?.id) return;
+    const payload = { badgeCleared: cleared, lastClearedUnread: clearedCount };
+    localStorage.setItem(`notifBadge:${currentUser.id}`, JSON.stringify(payload));
+  };
+
   const handleLogout = () => {
     logout();
     setShowNotifications(false);
@@ -74,6 +119,8 @@ const Navigation = () => {
                 onClick={() => {
                   setShowNotifications(true);
                   setBadgeCleared(true);
+                  setLastClearedUnread(unreadCount);
+                  persistBadgeState(true, unreadCount);
                 }}
               >
                   🔔

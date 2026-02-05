@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { likesAPI, commentsAPI } from '../../services/api';
+import { likesAPI, commentsAPI, postsAPI } from '../../services/api';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import LikeButton from '../LikeButton/LikeButton';
 import CommentSection from '../CommentSection/CommentSection';
 import { getSafeImageUrl } from '../../utils/imageUtils';
@@ -10,15 +11,24 @@ import './PostCard.css';
 
 const PostCard = ({ post }) => {
   const { currentUser } = useAuth();
+  const queryClient = useQueryClient();
   const [showComments, setShowComments] = useState(false);
   const [now, setNow] = useState(new Date());
   const defaultAvatar = '/default-avatar.jpg';
   const [failedSrcs, setFailedSrcs] = useState({});
-  const authorAvatar = getSafeImageUrl(
-    [post.authorImage, post.authorImageFallback],
-    failedSrcs,
-    defaultAvatar
-  );
+
+  const authorSources =
+    currentUser && currentUser.id === post.authorId
+      ? [
+          currentUser.profileImage,
+          currentUser.image,
+          currentUser.picture,
+          post.authorImage,
+          post.authorImageFallback,
+        ]
+      : [post.authorImage, post.authorImageFallback];
+
+  const authorAvatar = getSafeImageUrl(authorSources, failedSrcs, defaultAvatar);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60000);
@@ -42,6 +52,22 @@ const PostCard = ({ post }) => {
   });
 
   const isLiked = currentUser && likes.some(like => like.userId === currentUser.id);
+
+  const deleteMutation = useMutation({
+    mutationFn: () => postsAPI.delete(post.id, { userId: currentUser?.id }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['member-posts', post.authorId] });
+    },
+  });
+
+  const handleDelete = () => {
+    if (!currentUser || currentUser.id !== post.authorId) return;
+    const ok = window.confirm('Delete this post? This cannot be undone.');
+    if (!ok) return;
+    deleteMutation.mutate();
+  };
 
   const handleAvatarError = (e) => {
     e.target.onerror = null;
@@ -94,7 +120,15 @@ const PostCard = ({ post }) => {
           </Link>
         </div>
         {currentUser && currentUser.id === post.authorId && (
-          <button className="post-menu-btn">⋯</button>
+          <div className="post-owner-actions">
+            <button
+              className="post-delete-btn"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+            </button>
+          </div>
         )}
       </div>
 

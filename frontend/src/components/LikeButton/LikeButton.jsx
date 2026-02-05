@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { likesAPI } from '../../services/api';
+import { auth } from '../../services/firebaseClient';
 import './LikeButton.css';
 
 const LikeButton = ({ postId, isLiked: initialIsLiked, likeCount: initialLikeCount }) => {
@@ -26,16 +27,45 @@ const LikeButton = ({ postId, isLiked: initialIsLiked, likeCount: initialLikeCou
     },
   });
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (!currentUser || isGuest) {
       alert('Sign in (not as guest) to like posts');
       return;
     }
 
-    if (initialIsLiked) {
-      unlikeMutation.mutate();
-    } else {
-      likeMutation.mutate();
+    // Refresh token if using Firebase auth; demo/token-only users can skip
+    const refreshTokenIfFirebase = async () => {
+      const fbUser = auth.currentUser;
+      if (!fbUser) return;
+      const token = await fbUser.getIdToken(true);
+      if (token) localStorage.setItem('authToken', token);
+    };
+
+    const tryMutate = async () => {
+      if (initialIsLiked) {
+        await unlikeMutation.mutateAsync();
+      } else {
+        await likeMutation.mutateAsync();
+      }
+    };
+
+    try {
+      await refreshTokenIfFirebase();
+      await tryMutate();
+    } catch (err) {
+      // If we got a 401, try refreshing (Firebase) once more; otherwise surface quietly
+      if (err?.response?.status === 401) {
+        try {
+          await refreshTokenIfFirebase();
+          await tryMutate();
+        } catch (err2) {
+          console.error('Like failed after retry', err2);
+          alert('Session issue: please sign out and sign back in, then try again.');
+        }
+      } else {
+        console.error('Like failed', err);
+        alert('Unable to like right now. Please try again.');
+      }
     }
   };
 

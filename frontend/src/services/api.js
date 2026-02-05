@@ -21,6 +21,7 @@ api.interceptors.request.use((config) => {
 // Auth API
 export const authAPI = {
   guestLogin: () => api.post('/auth/guest-login'),
+  demoLogin: (memberId) => api.post('/auth/demo-login', { memberId }),
 };
 
 // Members API
@@ -57,7 +58,7 @@ export const followingAPI = {
 // Likes API
 export const likesAPI = {
   like: (data) => api.post('/likes', data),
-  unlike: (userId, postId) => api.delete(`/likes/${userId}/${postId}`),
+  unlike: (postId) => api.delete(`/likes/${postId}`),
   getByPost: (postId) => api.get(`/likes/post/${postId}`),
   getByUser: (userId) => api.get(`/likes/user/${userId}`),
 };

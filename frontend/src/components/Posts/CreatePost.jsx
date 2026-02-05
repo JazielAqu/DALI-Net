@@ -109,7 +109,7 @@ const CreatePost = () => {
         />
 
         <label className="file-input-label">
-          <span>Select image (optional)</span>
+          <span>Choose image</span>
           <input
             type="file"
             accept="image/*"

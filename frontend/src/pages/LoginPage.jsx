@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './LoginPage.css';
+import { auth } from '../services/firebaseClient';
+import { fetchSignInMethodsForEmail } from 'firebase/auth';
 
 const LoginPage = () => {
   const { signInGoogle, continueAsGuest, signUpWithEmail, signInWithEmail } = useAuth();
@@ -18,15 +20,68 @@ const LoginPage = () => {
     e.preventDefault();
     setError('');
     setPending(true);
+    const emailInput = email.trim();
+    const formatProvider = (method) => {
+      if (!method) return 'that provider';
+      const id = method.split('.')[0] || '';
+      if (id.toLowerCase() === 'google') return 'Google';
+      return id.charAt(0).toUpperCase() + id.slice(1);
+    };
     try {
       if (mode === 'signup') {
-        await signUpWithEmail(name, email, password);
+        await signUpWithEmail(name, emailInput, password);
       } else {
-        await signInWithEmail(email, password);
+        await signInWithEmail(emailInput, password);
       }
       navigate('/');
     } catch (err) {
-      const msg = err?.message || 'Authentication failed';
+      const raw = err?.code;
+      let msg;
+
+      // 1. Direct checks (Now possible because protection is OFF)
+      if (raw === 'auth/user-not-found') {
+        msg = 'No account found with this email. Please sign up first.';
+      } 
+      else if (raw === 'auth/wrong-password') {
+        // Wrong password may also mean the account has no password linked
+        try {
+          const methods = await fetchSignInMethodsForEmail(auth, emailInput);
+          if (methods.length === 0) {
+            msg = 'No account found with this email. Please sign up first.';
+          } else if (!methods.includes('password')) {
+            const provider = formatProvider(methods[0]);
+            msg = `This account was created with ${provider}. Please sign in using that method.`;
+          } else {
+            msg = 'Incorrect password. Please try again.';
+          }
+        } catch {
+          msg = 'Incorrect password. Please try again.';
+        }
+      } 
+      // 2. Handle modern SDK generic codes or Social-only accounts
+      else if (raw === 'auth/invalid-credential' || raw === 'auth/invalid-login-credentials') {
+        try {
+          const methods = await fetchSignInMethodsForEmail(auth, emailInput);
+          
+          if (methods.length === 0) {
+            msg = 'No account found with this email. Please sign up first.';
+          } else if (!methods.includes('password')) {
+            const provider = formatProvider(methods[0]);
+            msg = `This account was created with ${provider}. Please sign in using that method.`;
+          } else {
+            msg = 'Incorrect password. Please try again.';
+          }
+        } catch {
+          msg = 'Invalid email or password.';
+        }
+      } 
+      else if (raw === 'auth/invalid-email') {
+        msg = 'Please enter a valid email address.';
+      } 
+      else {
+        msg = err?.message || 'Authentication failed';
+      }
+
       setError(msg);
     } finally {
       setPending(false);

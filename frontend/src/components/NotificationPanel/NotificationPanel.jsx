@@ -22,7 +22,19 @@ const NotificationPanel = ({ isOpen, onClose }) => {
     },
   });
 
-  const notifications = notificationsData?.data?.data || [];
+  const notifications = (notificationsData?.data?.data || []).slice().sort((a, b) => {
+    const toDate = (val) => {
+      if (!val) return 0;
+      if (val.toDate) return val.toDate().getTime();
+      if (val._seconds || val.seconds) {
+        const seconds = val._seconds ?? val.seconds;
+        const nanos = val._nanoseconds ?? val.nanoseconds ?? 0;
+        return seconds * 1000 + Math.floor(nanos / 1e6);
+      }
+      return new Date(val).getTime();
+    };
+    return toDate(b.createdAt) - toDate(a.createdAt);
+  });
 
   const handleNotificationClick = (notification) => {
     if (!notification.read) {
@@ -32,18 +44,30 @@ const NotificationPanel = ({ isOpen, onClose }) => {
 
   const formatDate = (date) => {
     if (!date) return 'just now';
-    if (date.toDate) return date.toDate().toLocaleString();
-    if (typeof date === 'number' || typeof date === 'string') {
-      const dNum = new Date(date);
-      return Number.isNaN(dNum.getTime()) ? 'just now' : dNum.toLocaleString();
-    }
-    if (date._seconds || date.seconds) {
-      const seconds = date._seconds ?? date.seconds;
-      const millis = seconds * 1000 + Math.floor((date._nanoseconds ?? date.nanoseconds ?? 0) / 1e6);
-      return new Date(millis).toLocaleString();
-    }
-    const dFallback = new Date(date);
-    return Number.isNaN(dFallback.getTime()) ? 'just now' : dFallback.toLocaleString();
+
+    const toDate = () => {
+      if (date.toDate) return date.toDate();
+      if (typeof date === 'number' || typeof date === 'string') return new Date(date);
+      if (date._seconds || date.seconds) {
+        const seconds = date._seconds ?? date.seconds;
+        const millis = seconds * 1000 + Math.floor((date._nanoseconds ?? date.nanoseconds ?? 0) / 1e6);
+        return new Date(millis);
+      }
+      return new Date(date);
+    };
+
+    const d = toDate();
+    if (Number.isNaN(d.getTime())) return 'just now';
+
+    const now = new Date();
+    const msDiff = now - d;
+    const days = Math.floor(msDiff / 86400000);
+
+    const sameDay = now.toDateString() === d.toDateString();
+    if (sameDay) return 'today';
+    if (days >= 1 && days < 7) return days === 1 ? '1 day ago' : `${days} days ago`;
+
+    return d.toLocaleDateString();
   };
 
   const getNotificationLink = (notification) => {
