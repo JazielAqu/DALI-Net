@@ -7,6 +7,7 @@ import FollowButton from '../FollowButton/FollowButton';
 import PostCard from '../Posts/PostCard';
 import { getSafeImageUrl } from '../../utils/imageUtils';
 import './Profile.css';
+import { uploadProfileImage } from '../../services/firebaseClient';
 
 const Profile = ({ memberId }) => {
   const { currentUser, setUser, logout, linkPassword } = useAuth();
@@ -202,7 +203,7 @@ const Profile = ({ memberId }) => {
     });
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) {
       setNewImageData('');
@@ -213,18 +214,17 @@ const Profile = ({ memberId }) => {
       setImageError('Please select an image file');
       return;
     }
-    if (file.size > 3 * 1024 * 1024) {
-      setImageError('Image must be under 3MB');
-      return;
+    try {
+      setImageError('');
+      setNewImageFileName('Uploading...');
+      const url = await uploadProfileImage(file, currentUser.id);
+      setNewImageUrl(url);
+      setNewImageData('');
+      setNewImageFileName(file.name);
+    } catch (err) {
+      setImageError(err?.message || 'Could not upload image');
+      setNewImageFileName('');
     }
-    setImageError('');
-    setNewImageFileName(file.name);
-    setNewImageUrl('');
-    const reader = new FileReader();
-    reader.onload = () => {
-      setNewImageData(reader.result?.toString() || '');
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleRemovePhoto = () => {
@@ -358,7 +358,7 @@ const Profile = ({ memberId }) => {
                     </div>
                   </label>
                   <input
-                    type="url"
+                    type="text"
                     className="input"
                     placeholder="Image URL (optional)"
                     value={newImageUrl}

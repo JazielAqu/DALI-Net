@@ -264,8 +264,13 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
+  // Gracefully handle unexpected renders outside provider (e.g., during HMR)
+  return context || {
+    currentUser: null,
+    needsProfile: false,
+    personaProfile: null,
+    personaMemberId: null,
+    loginGuest: () => {},
+    logout: () => {},
+  };
 };

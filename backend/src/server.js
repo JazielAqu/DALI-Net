@@ -9,6 +9,9 @@ import likesRoutes from './routes/likes.js';
 import commentsRoutes from './routes/comments.js';
 import notificationsRoutes from './routes/notifications.js';
 import authRoutes from './routes/auth.js';
+import uploadsRoutes from './routes/uploads.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
@@ -34,6 +37,11 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '8mb' }));
 app.use(express.urlencoded({ extended: true, limit: '8mb' }));
 
+// Static files for locally stored uploads
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'DALI Net API is running' });
 });
@@ -46,6 +54,7 @@ app.use('/api/likes', likesRoutes);
 app.use('/api/comments', commentsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/uploads', uploadsRoutes);
 
 // Error handling
 app.use(notFound);

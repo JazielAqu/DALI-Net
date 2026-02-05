@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { membersAPI } from '../services/api';
+import { uploadProfileImage } from '../services/firebaseClient';
 import './ProfileFormPage.css';
 
 const blankProfile = {
@@ -88,7 +89,7 @@ const ProfileFormPage = () => {
     setForm((prev) => ({ ...prev, [field]: e.target.checked }));
   };
 
-  const handlePhoto = (e) => {
+  const handlePhoto = async (e) => {
     const file = e.target.files?.[0];
     if (!file) {
       setPhotoName('');
@@ -98,17 +99,16 @@ const ProfileFormPage = () => {
       setError('Please choose an image file');
       return;
     }
-    if (file.size > 3 * 1024 * 1024) {
-      setError('Image must be under 3MB');
-      return;
+    try {
+      setError('');
+      setPhotoName('Uploading...');
+      const url = await uploadProfileImage(file, currentUser.id);
+      setForm((prev) => ({ ...prev, profileImage: url }));
+      setPhotoName(file.name);
+    } catch (err) {
+      setError(err?.message || 'Could not upload image');
+      setPhotoName('');
     }
-    setError('');
-    setPhotoName(file.name);
-    const reader = new FileReader();
-    reader.onload = () => {
-      setForm((prev) => ({ ...prev, profileImage: reader.result?.toString() || '' }));
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleSubmit = (e) => {
@@ -217,8 +217,19 @@ const ProfileFormPage = () => {
 
             <label>
               Profile photo (upload)
-              <input type="file" accept="image/*" onChange={handlePhoto} />
-              {photoName && <span className="muted">Selected: {photoName}</span>}
+              <div className="file-input-row">
+                <input
+                  id="profile-form-file"
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhoto}
+                  className="file-input-hidden"
+                />
+                <label htmlFor="profile-form-file" className="btn btn-secondary file-trigger">
+                  Choose file
+                </label>
+                {photoName && <span className="muted">{photoName}</span>}
+              </div>
             </label>
 
             {error && <div className="error-message">{error}</div>}

@@ -13,6 +13,7 @@ import {
   linkWithCredential,
   updatePassword,
 } from 'firebase/auth';
+import api from './api';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -59,4 +60,31 @@ export const changePassword = async (newPassword) => {
   if (!auth.currentUser) throw new Error('No authenticated user');
   await updatePassword(auth.currentUser, newPassword);
   return auth.currentUser;
+};
+
+// Upload a profile image via backend local storage and return its URL
+export const uploadProfileImage = async (file, uid) => {
+  if (!file) throw new Error('No file provided');
+  if (!uid) throw new Error('User ID required to upload image');
+  const MAX_BYTES = 5 * 1024 * 1024; // 5MB
+  if (file.size > MAX_BYTES) throw new Error('Image must be under 5MB');
+
+  const toDataUrl = (f) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(f);
+    });
+
+  const dataUrl = await toDataUrl(file);
+  const { data } = await api.post('/uploads/profile-image', {
+    dataUrl,
+    fileName: file.name,
+  });
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+  const origin = apiBase.replace(/\/api$/, '');
+  const url = data.url || '';
+  if (url.startsWith('http')) return url;
+  return `${origin}${url}`;
 };

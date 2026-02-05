@@ -40,6 +40,20 @@
   resize: vertical;
 }
 
+.file-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+.file-trigger {
+  cursor: pointer;
+}
+
 .checkbox-field {
   display: flex;
   align-items: center;
