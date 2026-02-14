@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import admin from 'firebase-admin';
 import db from '../services/firebase.js';
 
-const { DEMO_MODE, DEMO_JWT_SECRET } = process.env;
+const { DEMO_JWT_SECRET, GUEST_MODE } = process.env;
 const DEMO_SECRET = DEMO_JWT_SECRET || 'demo-secret-key';
 
 export const requireAuth = async (req, res, next) => {
@@ -63,8 +63,9 @@ export const demoLogin = async (memberId) => {
 };
 
 export const guestLogin = (req, res) => {
-  if (DEMO_MODE !== 'true') {
-    return res.status(403).json({ success: false, error: { message: 'Demo login disabled' } });
+  // Guest access is enabled by default; set GUEST_MODE=false to disable explicitly.
+  if (GUEST_MODE === 'false') {
+    return res.status(403).json({ success: false, error: { message: 'Guest login disabled' } });
   }
 
   const guestId = `guest-${randomUUID()}`;
