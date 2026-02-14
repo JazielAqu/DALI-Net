@@ -30,7 +30,7 @@ const HomePage = () => {
   const allMembers = membersData?.data?.data || [];
   const selfMember = selfMemberData?.data?.data;
   const mergedMembers = selfMember && !allMembers.some((m) => m.id === selfMember.id)
-    ? [selfMember, ...allMembers]
+    ? [...allMembers, selfMember]
     : allMembers;
   const searchLower = searchTerm.trim().toLowerCase();
   const members = searchLower

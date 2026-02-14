@@ -27,11 +27,12 @@ router.get('/', async (req, res, next) => {
       snapshot = await db.collection('members').limit(500).get();
     }
     
-    // Collect and deduplicate by normalized name to avoid duplicates from seeding
+    // Collect members. Keep user-created locked profiles distinct even if names collide.
     const membersByName = new Map();
     snapshot.forEach(doc => {
       const data = { id: doc.id, ...doc.data() };
-      const key = (data.name || '').trim().toLowerCase();
+      const normalizedName = (data.name || '').trim().toLowerCase();
+      const key = data.locked ? doc.id : normalizedName;
       if (!key) return;
       if (!membersByName.has(key)) {
         membersByName.set(key, data);
