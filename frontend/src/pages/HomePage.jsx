@@ -20,14 +20,25 @@ const HomePage = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: selfMemberData } = useQuery({
+    queryKey: ['member-self-home', currentUser?.id],
+    queryFn: () => membersAPI.getById(currentUser.id),
+    enabled: !!currentUser?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const allMembers = membersData?.data?.data || [];
+  const selfMember = selfMemberData?.data?.data;
+  const mergedMembers = selfMember && !allMembers.some((m) => m.id === selfMember.id)
+    ? [selfMember, ...allMembers]
+    : allMembers;
   const searchLower = searchTerm.trim().toLowerCase();
   const members = searchLower
-    ? allMembers.filter((m) =>
+    ? mergedMembers.filter((m) =>
         m.name?.toLowerCase().includes(searchLower) ||
         m.bio?.toLowerCase().includes(searchLower)
       )
-    : allMembers;
+    : mergedMembers;
 
   const getAvatarSrc = (member) =>
     getSafeImageUrl(
