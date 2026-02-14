@@ -1,13 +1,21 @@
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navigation from './components/Navigation/Navigation';
-import HomePage from './pages/HomePage';
-import FeedPage from './pages/FeedPage';
-import FollowingFeedPage from './pages/FollowingFeedPage';
-import ProfilePage from './pages/ProfilePage';
-import NotificationsPage from './pages/NotificationsPage';
-import LoginPage from './pages/LoginPage';
-import ProfileFormPage from './pages/ProfileFormPage';
+
+const HomePage = lazy(() => import('./pages/HomePage'));
+const FeedPage = lazy(() => import('./pages/FeedPage'));
+const FollowingFeedPage = lazy(() => import('./pages/FollowingFeedPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const ProfileFormPage = lazy(() => import('./pages/ProfileFormPage'));
+
+const PageLoader = () => (
+  <div className="main-content">
+    <div className="spinner"></div>
+  </div>
+);
 
 const OnboardingGuard = ({ children }) => {
   const { currentUser, needsProfile } = useAuth();
@@ -22,20 +30,29 @@ const OnboardingGuard = ({ children }) => {
 };
 
 function AppShell() {
+  useEffect(() => {
+    // Warm backend early; helps reduce first API delay on cold starts.
+    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+    const origin = apiBase.replace(/\/api$/, '');
+    fetch(`${origin}/health`, { method: 'GET', mode: 'cors' }).catch(() => {});
+  }, []);
+
   return (
     <div className="app">
       <Navigation />
       <main className="main-content">
         <OnboardingGuard>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/feed" element={<FeedPage />} />
-            <Route path="/following" element={<FollowingFeedPage />} />
-            <Route path="/profile/:memberId" element={<ProfilePage />} />
-            <Route path="/profile/edit" element={<ProfileFormPage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/login" element={<LoginPage />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/feed" element={<FeedPage />} />
+              <Route path="/following" element={<FollowingFeedPage />} />
+              <Route path="/profile/:memberId" element={<ProfilePage />} />
+              <Route path="/profile/edit" element={<ProfileFormPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/login" element={<LoginPage />} />
+            </Routes>
+          </Suspense>
         </OnboardingGuard>
       </main>
     </div>

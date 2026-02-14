@@ -16,7 +16,7 @@ const HomePage = () => {
 
   const { data: membersData, isLoading, error } = useQuery({
     queryKey: ['members'],
-    queryFn: () => membersAPI.getAll({ limit: 500 }),
+    queryFn: () => membersAPI.getAll({ limit: 250 }),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -28,14 +28,6 @@ const HomePage = () => {
         m.bio?.toLowerCase().includes(searchLower)
       )
     : allMembers;
-
-  // Debug logging
-  if (error) {
-    console.error('Error fetching members:', error);
-  }
-  if (membersData) {
-    console.log('Members data:', membersData);
-  }
 
   const getAvatarSrc = (member) =>
     getSafeImageUrl(

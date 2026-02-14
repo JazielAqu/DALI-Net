@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './LoginPage.css';
-import { auth } from '../services/firebaseClient';
-import { fetchSignInMethodsForEmail } from 'firebase/auth';
+import { auth, fetchSignInMethodsForEmail } from '../services/firebaseClient';
 
 const LoginPage = () => {
   const { signInGoogle, continueAsGuest, signUpWithEmail, signInWithEmail } = useAuth();

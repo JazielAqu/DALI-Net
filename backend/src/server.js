@@ -18,15 +18,21 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-const allowedOrigins = [
+const normalizeOrigin = (value = '') => value.replace(/\/$/, '');
+
+const explicitOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:5173',
-].filter(Boolean);
+].filter(Boolean).map(normalizeOrigin);
+
+const allowlistedSuffixes = ['.onrender.com'];
 
 const corsOptions = {
   origin: (origin, cb) => {
     if (!origin) return cb(null, true); // allow non-browser tools
-    if (allowedOrigins.includes(origin)) return cb(null, true);
+    const normalized = normalizeOrigin(origin);
+    if (explicitOrigins.includes(normalized)) return cb(null, true);
+    if (allowlistedSuffixes.some((suffix) => normalized.endsWith(suffix))) return cb(null, true);
     return cb(new Error(`CORS blocked for origin: ${origin}`), false);
   },
   credentials: true,
