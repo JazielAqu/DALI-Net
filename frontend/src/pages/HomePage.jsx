@@ -16,7 +16,7 @@ const HomePage = () => {
 
   const { data: membersData, isLoading, error } = useQuery({
     queryKey: ['members'],
-    queryFn: () => membersAPI.getAll({ limit: 250 }),
+    queryFn: () => membersAPI.getAll({ limit: 1000 }),
     staleTime: 5 * 60 * 1000,
   });
 
